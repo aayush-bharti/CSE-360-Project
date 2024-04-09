@@ -423,25 +423,45 @@ public class DoctorView extends Application {
 				// colors the history button so it shows that it is clicked
 				historyTab.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
 				
+				// ADD VALUES TO TABLE
 				// creates a table and all of its columns
 				TableView<String> histTable = new TableView<>();
 				TableColumn<String, String> dateCol = new TableColumn<>("Date");
-				TableColumn<String, String> weightCol = new TableColumn<>("Weight (lb)");
-				TableColumn<String, String> heightCol = new TableColumn<>("Height (in)");
-				TableColumn<String, String> tempCol = new TableColumn<>("Body Temperature (F)");
-				TableColumn<String, String> bpCol = new TableColumn<>("Blood Pressure (mmHg");
-
+				TableColumn<String, String> weightCol = new TableColumn<>("Weight(lb)");
+				TableColumn<String, String> heightCol = new TableColumn<>("Height(in)");
+				TableColumn<String, String> tempCol = new TableColumn<>("Body Temperature(F)");
+				TableColumn<String, String> bpCol = new TableColumn<>("Blood Pressure(mmHg)");
+				TableColumn<String, String> healthCol = new TableColumn<>("Health Issues");
+				TableColumn<String, String> medCol = new TableColumn<>("Medications Prescribed");
+				
+				
 				// adds every column to the table and sets their widths
-				histTable.getColumns().addAll(dateCol, weightCol, heightCol, tempCol, bpCol);
-				histTable.setMaxWidth(700);
-				dateCol.setPrefWidth(100);
-				weightCol.setPrefWidth(100);
-				heightCol.setPrefWidth(100);
+				histTable.getColumns().addAll(dateCol, weightCol, heightCol, tempCol, bpCol, healthCol, medCol);
+				histTable.setMaxWidth(800);
+				dateCol.setPrefWidth(60);
+				weightCol.setPrefWidth(70);
+				heightCol.setPrefWidth(70);
 				tempCol.setPrefWidth(150);
 				bpCol.setPrefWidth(150);
+				healthCol.setPrefWidth(100);
+				medCol.setPrefWidth(150);
+				histTable.setTranslateX(-20);
+				
+				// ADD VALUES TO IMMUNIZATION FIELD
+				// creates a hbox that will display the immunization records
+				HBox immunizationBox = new HBox();
+				Label immunization = new Label("IMMUNIZATIONS:");
+				immunization.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+				TextField immunizationField = new TextField();
+				immunizationField.setTranslateY(-5);
+				immunizationField.setMinWidth(400);
+				immunizationBox.getChildren().addAll(immunization, immunizationField);
+				immunizationBox.setSpacing(20);
+				
 				
 				// adds everything to the right vbox and displays it
-				right.getChildren().addAll(histTable);	
+				right.getChildren().addAll(histTable, immunizationBox);	
+				right.setSpacing(20);
 			}
 		});
 		
@@ -542,6 +562,7 @@ public class DoctorView extends Application {
 		// adds the label in the left vbox
 		Label docName = new Label("INSERT Doc ");
 		docName.setPrefWidth(175);
+		docName.setStyle("-fx-text-fill: #00005a;");
 		docName.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 		// adds the back button to the left vbox
 		Button back = new Button("BACK");
