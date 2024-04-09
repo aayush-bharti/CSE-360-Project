@@ -3,7 +3,7 @@
 // Assignment : Project
 // Description : Nurse View page for phase 3
 
-package cse360NurseView;
+package Project;
 
 import java.io.*;
 import java.util.*;
