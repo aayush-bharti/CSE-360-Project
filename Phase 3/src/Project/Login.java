@@ -13,7 +13,9 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import javafx.scene.control.Separator;
@@ -61,28 +63,65 @@ public class Login extends Application {
         Button signUp = new Button("SIGN UP");
         signUp.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         signUp.setPrefWidth(200);
+        
+        Label spacer = new Label("");
+        spacer.setPrefWidth(180);
 
         // creating the button for identifying if it's a patient signing in/up
-        Button patient = new Button("PATIENT");
+        ToggleGroup roles = new ToggleGroup();
+        RadioButton patient = new RadioButton("PATIENT");
         patient.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        patient.setPrefWidth(200);
-
-        // creating the button for identifying if it's a nurse signing in/up
-        Button nurse = new Button("NURSE");
-        nurse.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        nurse.setPrefWidth(200);
-
-        // creating the button for identifying if it's a doctor signing in/up
-        Button doctor = new Button("DOCTOR");
-        doctor.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        doctor.setPrefWidth(200);
-        doctor.setOnAction(new EventHandler<>() {
-        	public void handle(ActionEvent event) {
-        		PatientSearch searchScreen = new PatientSearch();
-        		searchScreen.start(primaryStage);
-        	}
+        patient.setPrefWidth(100);
+        patient.setPrefHeight(45);
+        patient.setToggleGroup(roles);
+        patient.selectedProperty().addListener((observable, oldValue, selected) -> 
+        {
+        	if (selected) 
+            {
+                patient.setStyle("-fx-background-color: #9AB4DF;");
+            }
+            
+            else
+            {
+                patient.setStyle("-fx-background-color: #A8D1C3;");
+            }
         });
         
+        RadioButton nurse = new RadioButton("NURSE");
+        nurse.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        nurse.setPrefWidth(100);
+        nurse.setPrefHeight(45);
+        nurse.setToggleGroup(roles);
+        nurse.selectedProperty().addListener((observable, oldValue, selected) -> 
+        {
+            if (selected) 
+            {
+                nurse.setStyle("-fx-background-color: #9AB4DF;");
+            }
+            
+            else
+            {
+                nurse.setStyle("-fx-background-color: #A8D1C3;");
+            }
+        });
+        
+        RadioButton doctor = new RadioButton("DOCTOR");
+        doctor.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        doctor.setPrefWidth(100);
+        doctor.setPrefHeight(45);
+        doctor.setToggleGroup(roles);
+        doctor.selectedProperty().addListener((observable, oldValue, selected) -> 
+        {
+            if (selected) 
+            {
+                doctor.setStyle("-fx-background-color: #9AB4DF;");
+            }
+            
+            else
+            {
+                doctor.setStyle("-fx-background-color: #A8D1C3;");
+            }
+        });
         
         // second, will create the VBoxs, put the elements in them and fix all the spacing and alignment
         // creating the VBox for the left side and adding all the elements to it
@@ -106,7 +145,7 @@ public class Login extends Application {
 
         // creating the VBox for the right side and adding all the elements to it
         VBox rightSide = new VBox(10);
-        rightSide.getChildren().addAll(portal, patient, nurse, doctor);
+        rightSide.getChildren().addAll(portal, patient, nurse, doctor, spacer);
         
         // setting padding and aligning it for aesthetics
         rightSide.setPadding(new Insets(20, 20, 20, 20));
@@ -134,6 +173,31 @@ public class Login extends Application {
         root.setRight(rightSide);
         BorderPane.setMargin(leftSide, new Insets(0, 0, 0, 100));
         BorderPane.setMargin(rightSide, new Insets(0, 100, 0, 0));
+        
+        signIn.setOnAction(new EventHandler<>()
+        {
+        	public void handle(ActionEvent event)
+        	{
+        		if (doctor.isSelected())
+        		{
+        			PatientSearch searchScreen = new PatientSearch();
+        	        searchScreen.start(primaryStage);
+        		}
+        		
+        		else if (patient.isSelected())
+        		{
+        			PatientView patView = new PatientView();
+        			patView.start(primaryStage);
+        		}
+        		
+        		else
+        		{
+        			NurseView nurView = new NurseView();
+        			nurView.start(primaryStage);
+        		}
+        	}
+        }
+        );
         
         // making the window size and showing it to user upon running
         Scene scene = new Scene(root, 800, 550);
