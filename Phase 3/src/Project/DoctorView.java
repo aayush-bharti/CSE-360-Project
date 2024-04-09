@@ -58,6 +58,7 @@ public class DoctorView extends Application {
 					physicalTab.setStyle("");
 					historyTab.setStyle("");
 					messagesTab.setStyle("");
+					root.setCenter(right);
 				}
 				// colors the prescriptions button so it shows that it is clicked
 				prescriptionsTab.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
@@ -147,6 +148,7 @@ public class DoctorView extends Application {
 					physicalTab.setStyle("");
 					historyTab.setStyle("");
 					messagesTab.setStyle("");
+					root.setCenter(right);
 				}
 				// colors the physical button so it shows that it is clicked
 				physicalTab.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
@@ -419,6 +421,7 @@ public class DoctorView extends Application {
 					physicalTab.setStyle("");
 					historyTab.setStyle("");
 					messagesTab.setStyle("");
+					root.setCenter(right);
 				}
 				// colors the history button so it shows that it is clicked
 				historyTab.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
@@ -475,6 +478,7 @@ public class DoctorView extends Application {
 					physicalTab.setStyle("");
 					historyTab.setStyle("");
 					messagesTab.setStyle("");
+					root.setCenter(right);
 				}
 				// colors the messages button so it shows that it is clicked
 				messagesTab.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
@@ -551,10 +555,16 @@ public class DoctorView extends Application {
 				// adds everything to the right vbox
 				right.getChildren().addAll(recipientBox, subjectBox, message, buttons, pastMessages);	
 				right.setSpacing(10);
-				right.setTranslateX(100);
-				right.setTranslateY(20);
+				
+				// copies the right vbox into a temporary vbox to change its position 
+				VBox temp = new VBox();
+				temp.getChildren().addAll(right);
+				
+				temp.setTranslateX(100);
+				temp.setTranslateY(20);
+				
 				// creates a scroll pane so that the screen its scrollable
-				ScrollPane scroll = new ScrollPane(right);
+				ScrollPane scroll = new ScrollPane(temp);
 				root.setCenter(scroll);
 			}
 		});
