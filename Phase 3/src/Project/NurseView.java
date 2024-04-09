@@ -17,7 +17,7 @@ import javafx.stage.Stage;
 import javafx.geometry.*;
 import javafx.collections.*;
 
-public class cse360NurseView extends Application {
+public class NurseView extends Application {
 
 	public void start(Stage primaryStage) {
 		// the root to hold everything
@@ -47,6 +47,20 @@ public class cse360NurseView extends Application {
 		Button messagesTab = new Button("MESSAGES");
 		messagesTab.setPrefWidth(175);
 		messagesTab.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+		
+		Button back = new Button("BACK");
+		back.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+		back.setPrefWidth(175);
+		// event handler for the back button
+		back.setOnAction(new EventHandler<>()
+        {
+        	public void handle(ActionEvent event)
+        	{
+        		Login log = new Login();
+        		log.start(primaryStage);
+        	}
+        }
+        );
 
 		// event handler for if the prescriptions button is clicked 
 		questionsTab.setOnAction(new EventHandler<>() {
@@ -385,19 +399,6 @@ public class cse360NurseView extends Application {
 		Label docName = new Label("INSERT Doc ");
 		docName.setPrefWidth(175);
 		docName.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-		// adds the back button to the left vbox
-		Button back = new Button("BACK");
-		back.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-		back.setPrefWidth(175);
-		// event handler for the back button
-        back.setOnAction(new EventHandler<>() {
-        	public void handle(ActionEvent event) {
-        		// goes back to the patient search screen if a new patient wants to be selected or they want to logout
-//        		PatientSearch searchScreen = new PatientSearch();
-//        		searchScreen.start(primaryStage);
-        		int x = 1;
-        	}
-        });
         // adds everything to the left vbox and sets the background color
 		left.getChildren().addAll(patientName, questionsTab, vitalsTab, historyTab, messagesTab, docName, back);
 		left.setSpacing(70);
@@ -414,7 +415,7 @@ public class cse360NurseView extends Application {
 		
 		// making the window size and showing it to user upon running
 		Scene scene = new Scene(root, 1000, 700);
-		primaryStage.setTitle("Doctor View");
+		primaryStage.setTitle("Nurse View");
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}
@@ -435,4 +436,3 @@ public class cse360NurseView extends Application {
 		t4.clear();
 	}
 }
-
