@@ -40,7 +40,7 @@ public class DoctorView extends Application {
 		physicalTab.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 		physicalTab.setPrefWidth(175);
 		
-		Button historyTab = new Button("HISTORY");
+		Button historyTab = new Button("HISTORY"); // note
 		historyTab.setPrefWidth(175);
 		historyTab.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 		
