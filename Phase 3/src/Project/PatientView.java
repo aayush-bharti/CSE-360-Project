@@ -83,6 +83,7 @@ public class PatientView extends Application {
 					personalInfoOpen.setStyle("");
 					appointmentOpen.setStyle("");
 					messagesOpen.setStyle("");
+					root.setCenter(rightSide);
 				}
         		
         		// sets the color of the active page to blue
@@ -198,6 +199,7 @@ public class PatientView extends Application {
                 
                 // adding all the elements to the rightside vbox to display
 				rightSide.getChildren().addAll(topLabel, grid, save);
+
         	}
         }
         );
@@ -213,6 +215,7 @@ public class PatientView extends Application {
 					personalInfoOpen.setStyle("");
 					appointmentOpen.setStyle("");
 					messagesOpen.setStyle("");
+					root.setCenter(rightSide);
 				}
         		
         		// sets style of active page for user clarity and aesthetics
@@ -330,11 +333,19 @@ public class PatientView extends Application {
 				// adds everything to the rightSide vbox
 				rightSide.getChildren().addAll(recipientBox, subjectBox, message, buttons, pastMessages);	
 				rightSide.setSpacing(10);
-				rightSide.setTranslateX(100);
-				rightSide.setTranslateY(20);
+				
+				// making new temp vbox to add everything to right
+				VBox newRight = new VBox();
+				newRight.getChildren().addAll(rightSide);
+				
+				// setting spacing for aesthetics
+				newRight.setTranslateX(100);
+				newRight.setTranslateY(20);
+				
 				// creates a scroll pane so that the screen its scrollable
-				ScrollPane scroll = new ScrollPane(rightSide);
-				root.setCenter(scroll);
+				ScrollPane scroll = new ScrollPane(newRight);
+				root.setCenter(scroll); // scroll setting
+				
 			}
         }
         );
@@ -352,7 +363,6 @@ public class PatientView extends Application {
 		primaryStage.setTitle("Patient View");
 		primaryStage.setScene(scene);
 		primaryStage.show();
-	
 	}
 	
 }
