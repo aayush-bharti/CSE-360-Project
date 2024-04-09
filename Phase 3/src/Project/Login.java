@@ -67,13 +67,17 @@ public class Login extends Application {
         Label spacer = new Label("");
         spacer.setPrefWidth(180);
 
-        // creating the button for identifying if it's a patient signing in/up
+        // creating the toggle group to contain the three radio buttons for the roles
         ToggleGroup roles = new ToggleGroup();
+        
+        // patient radio button to be pressed if a patient wants to sign in
         RadioButton patient = new RadioButton("PATIENT");
         patient.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         patient.setPrefWidth(100);
         patient.setPrefHeight(45);
         patient.setToggleGroup(roles);
+        
+        // checking if patient selected then color that radiobutton to signify
         patient.selectedProperty().addListener((observable, oldValue, selected) -> 
         {
         	if (selected) 
@@ -87,11 +91,14 @@ public class Login extends Application {
             }
         });
         
+        // nurse radio button to be pressed if a nurse wants to sign in
         RadioButton nurse = new RadioButton("NURSE");
         nurse.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         nurse.setPrefWidth(100);
         nurse.setPrefHeight(45);
         nurse.setToggleGroup(roles);
+        
+        // checking if nurse selected then color that radiobutton to signify
         nurse.selectedProperty().addListener((observable, oldValue, selected) -> 
         {
             if (selected) 
@@ -105,11 +112,14 @@ public class Login extends Application {
             }
         });
         
+        // doctor radiobutton to be pressed if a doctor wants to sign in
         RadioButton doctor = new RadioButton("DOCTOR");
         doctor.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         doctor.setPrefWidth(100);
         doctor.setPrefHeight(45);
         doctor.setToggleGroup(roles);
+        
+        // checking if doctor selected then color that radiobutton to signify
         doctor.selectedProperty().addListener((observable, oldValue, selected) -> 
         {
             if (selected) 
@@ -123,7 +133,6 @@ public class Login extends Application {
             }
         });
         
-        // second, will create the VBoxs, put the elements in them and fix all the spacing and alignment
         // creating the VBox for the left side and adding all the elements to it
         VBox leftSide = new VBox(10);
         leftSide.getChildren().addAll(login, username, password, signIn, separator, signUp);
@@ -174,27 +183,136 @@ public class Login extends Application {
         BorderPane.setMargin(leftSide, new Insets(0, 0, 0, 100));
         BorderPane.setMargin(rightSide, new Insets(0, 100, 0, 0));
         
+        // if the sign in button is clicked, this logic will be carried out
         signIn.setOnAction(new EventHandler<>()
         {
         	public void handle(ActionEvent event)
         	{
+        		// if the doctor is selected trying to sign in carry out this logic
         		if (doctor.isSelected())
         		{
-        			PatientSearch searchScreen = new PatientSearch();
-        	        searchScreen.start(primaryStage);
+        			// checking if the username and the password are what any doctor would use to sign in to their view
+        			if ((username.getText().equals("doc")) && (password.getText().equals("doc"))) // generic one cuz doctors dont need to make their own
+        			{
+        				// opening the patient search view
+        				PatientSearch searchScreen = new PatientSearch();
+            	        searchScreen.start(primaryStage);
+        			}
         		}
         		
+        		// if the patient is selected then we have to check credentials with database to be able to determine if we can go on to next page or not
         		else if (patient.isSelected())
         		{
+        			// ADD - add in logic here about checking credentials with database to see if patient exists otherwise sign up
         			PatientView patView = new PatientView();
         			patView.start(primaryStage);
         		}
         		
+        		// if nurse is selected carry out this logic
         		else
         		{
-        			NurseView nurView = new NurseView();
-        			nurView.start(primaryStage);
+        			// checking if the username and the password are what any nurse would use to sign in to their view
+        			if ((username.getText().equals("nurse")) && (password.getText().equals("nurse"))) // nurse one cuz nurses dont need to make their own
+        			{
+        				// opening the nurse search view
+        				NurseView nurView = new NurseView();
+            			nurView.start(primaryStage);
+        			}
         		}
+        	}
+        }
+        );
+        
+        // if the sign up button is clicked, this logic will be carried out
+        signUp.setOnAction(new EventHandler<>()
+        {
+        	public void handle(ActionEvent event)
+        	{
+        		// clear the left vbox and set the patient radiobutton to selected because only patients will sign up
+        		leftSide.getChildren().clear();
+        		patient.setStyle("-fx-background-color: #9AB4DF;");
+        		patient.setSelected(true);
+        		
+        		// error label for later use in case patient does not fill out all fields
+        		Label errorLabel = new Label();
+        		errorLabel.setFont(Font.font("Arial", 16));
+        		errorLabel.setStyle("-fx-text-fill: red;");
+        		
+        		// carries out the logic for if they click sign up within the sign up screen
+        		Button signUpNested = new Button("SIGN UP");
+                signUpNested.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+                signUpNested.setPrefWidth(200);
+        		
+        		// textfield for the first name that sets up the style, size, grid position and makes it uneditable
+                TextField firstNameField = new TextField();
+                firstNameField.setPromptText("First Name");
+                //firstNameField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
+                firstNameField.setEditable(true);
+                
+                // textfield for the last name that sets up the style, size, grid position and makes it uneditable
+                TextField lastNameField = new TextField();
+                lastNameField.setPromptText("Last Name");
+                //lastNameField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
+                lastNameField.setEditable(true);
+
+                // textfield for the birth date that sets up the style, size, grid position and makes it uneditable
+                TextField birthField = new TextField();
+                birthField.setPromptText("Date of Birth");
+                //birthField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
+                birthField.setEditable(true);
+                
+                // textfield for the phone number that sets up the style, size, grid position and makes it editable
+                TextField phoneField = new TextField();
+                phoneField.setPromptText("Phone Number");
+                //phoneField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
+                phoneField.setEditable(true);
+                
+                // textfield for the email that sets up the style, size, grid position and makes it editable
+                TextField emailField = new TextField();
+                emailField.setPromptText("Email");
+                //emailField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
+                emailField.setEditable(true);
+                
+                // textfield for the insurance field that sets up the style, size, grid position and makes it editable
+                TextField usernameField = new TextField();
+                usernameField.setPromptText("Username");
+                //usernameField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
+                usernameField.setEditable(true);
+                
+                // textfield for the pharmacy field that sets up the style, size, grid position and makes it editable
+                TextField passwordField = new TextField();
+                passwordField.setPromptText("Password");
+                //passwordField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
+                passwordField.setEditable(true);
+
+        		
+                // adds all fields and button and label to the left vbox
+                leftSide.getChildren().addAll(firstNameField, lastNameField, birthField, phoneField, emailField, usernameField, passwordField, signUpNested, errorLabel);
+                
+                // if the patient clicks sign up within the sign up screen, conduct this logic
+                signUpNested.setOnAction(new EventHandler<>()
+                {
+                	public void handle(ActionEvent event)
+                	{
+                		// if there are any empty fields show the error message
+                		if ((firstNameField.getText().isEmpty()) || (lastNameField.getText().isEmpty()) || (birthField.getText().isEmpty()) || (phoneField.getText().isEmpty()) || (emailField.getText().isEmpty()) || (usernameField.getText().isEmpty()) || (passwordField.getText().isEmpty()))
+                		{
+                			errorLabel.setText("Please fill out all fields.");
+                		}
+                		
+                		// if all fields are filled, create new patient in database with the specified fields and take them to the patient view
+                		else
+                		{
+                			// ADD
+                			// create new patient in the database system with all those specified fields and credentials
+                			
+                			// take newly signed up patient to their view
+                			PatientView patView = new PatientView();
+                			patView.start(primaryStage);
+                		}
+                	}
+                }
+                );
         	}
         }
         );
