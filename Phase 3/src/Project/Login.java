@@ -228,6 +228,10 @@ public class Login extends Application {
         {
         	public void handle(ActionEvent event)
         	{
+        		// clearing the right side to maximize screen for signing up
+        		rightSide.getChildren().clear();
+        		root.setRight(null);
+        		
         		// clear the left vbox and set the patient radiobutton to selected because only patients will sign up
         		leftSide.getChildren().clear();
         		patient.setStyle("-fx-background-color: #9AB4DF;");
@@ -237,57 +241,109 @@ public class Login extends Application {
         		Label errorLabel = new Label();
         		errorLabel.setFont(Font.font("Arial", 16));
         		errorLabel.setStyle("-fx-text-fill: red;");
+        		errorLabel.setTranslateX(160);
+        		errorLabel.setTranslateY(-127);
         		
         		// carries out the logic for if they click sign up within the sign up screen
         		Button signUpNested = new Button("SIGN UP");
                 signUpNested.setFont(Font.font("Arial", FontWeight.BOLD, 14));
                 signUpNested.setPrefWidth(200);
+                signUpNested.setTranslateX(160);
+                signUpNested.setTranslateY(-117);
+                
+                // button that takes the user back to the login page
+                Button backToLogin = new Button("BACK TO LOGIN");
+                backToLogin.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+                backToLogin.setPrefWidth(200);
+                backToLogin.setTranslateX(160);
+                backToLogin.setTranslateY(-117);
         		
         		// textfield for the first name that sets up the style, size, grid position and makes it uneditable
                 TextField firstNameField = new TextField();
                 firstNameField.setPromptText("First Name");
                 //firstNameField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
                 firstNameField.setEditable(true);
+                firstNameField.setTranslateX(50);
+                firstNameField.setTranslateY(20);
                 
                 // textfield for the last name that sets up the style, size, grid position and makes it uneditable
                 TextField lastNameField = new TextField();
                 lastNameField.setPromptText("Last Name");
                 //lastNameField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
                 lastNameField.setEditable(true);
+                lastNameField.setTranslateX(280);
+                lastNameField.setTranslateY(-37);
 
                 // textfield for the birth date that sets up the style, size, grid position and makes it uneditable
                 TextField birthField = new TextField();
                 birthField.setPromptText("Date of Birth");
                 //birthField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
                 birthField.setEditable(true);
+                birthField.setTranslateX(150);
+                birthField.setTranslateY(-20);
                 
                 // textfield for the phone number that sets up the style, size, grid position and makes it editable
                 TextField phoneField = new TextField();
                 phoneField.setPromptText("Phone Number");
                 //phoneField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
                 phoneField.setEditable(true);
+                phoneField.setTranslateX(50);
+                phoneField.setTranslateY(0);
                 
                 // textfield for the email that sets up the style, size, grid position and makes it editable
                 TextField emailField = new TextField();
                 emailField.setPromptText("Email");
                 //emailField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
                 emailField.setEditable(true);
+                emailField.setTranslateX(280);
+                emailField.setTranslateY(-57);
                 
                 // textfield for the insurance field that sets up the style, size, grid position and makes it editable
                 TextField usernameField = new TextField();
                 usernameField.setPromptText("Username");
                 //usernameField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
                 usernameField.setEditable(true);
+                usernameField.setTranslateX(50);
+                usernameField.setTranslateY(-80);
                 
-                // textfield for the pharmacy field that sets up the style, size, grid position and makes it editable
+                // textfield for the password field that sets up the style, size, grid position and makes it editable
                 TextField passwordField = new TextField();
                 passwordField.setPromptText("Password");
                 //passwordField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
                 passwordField.setEditable(true);
+                passwordField.setTranslateX(280);
+                passwordField.setTranslateY(-137);
+                
+             // textfield for the insurance field that sets up the style, size, grid position and makes it editable
+                TextField insuranceField = new TextField();
+                insuranceField.setPromptText("Insurance Provider");
+                //passwordField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
+                insuranceField.setEditable(true);
+                insuranceField.setTranslateX(50);
+                insuranceField.setTranslateY(-40);
+                
+             // textfield for the pharmacy field that sets up the style, size, grid position and makes it editable
+                TextField pharmacyField = new TextField();
+                pharmacyField.setPromptText("Pharmacy");
+                //passwordField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
+                pharmacyField.setEditable(true);
+                pharmacyField.setTranslateX(280);
+                pharmacyField.setTranslateY(-97);
 
         		
                 // adds all fields and button and label to the left vbox
-                leftSide.getChildren().addAll(firstNameField, lastNameField, birthField, phoneField, emailField, usernameField, passwordField, signUpNested, errorLabel);
+                leftSide.getChildren().addAll(firstNameField, lastNameField, birthField, phoneField, emailField, insuranceField, pharmacyField, usernameField, passwordField, backToLogin, signUpNested, errorLabel);
+                
+                // if the patient clicks the back to login button conduct this
+                backToLogin.setOnAction(new EventHandler<>()
+                {
+                	public void handle(ActionEvent event)
+                	{
+                		Login newlog = new Login();
+                		newlog.start(primaryStage);
+                	}
+                }
+                );
                 
                 // if the patient clicks sign up within the sign up screen, conduct this logic
                 signUpNested.setOnAction(new EventHandler<>()
