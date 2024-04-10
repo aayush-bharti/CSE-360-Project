@@ -62,7 +62,7 @@ public class NurseView extends Application {
         	}
         	);
 
-		// event handler for if the prescriptions button is clicked 
+		// questions is clicked eventhandler
 		questionsTab.setOnAction(new EventHandler<>() {
 			public void handle(ActionEvent event) {
 				// will reset all the colors and clear the right vbox so it can be changed
@@ -74,41 +74,42 @@ public class NurseView extends Application {
 					messagesTab.setStyle("");
 					root.setCenter(right);
 				}
-				// colors the prescriptions button so it shows that it is clicked
+				// colors the questions button so it shows that it is clicked
 				questionsTab.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
 				
-				// label and text area to enter the prescription for the patient
-				Label question1Label = new Label("Question 1:");
+				// label and text area to enter first question for the patient
+				Label question1Label = new Label("Any Physical Health Concerns?:");
 				question1Label.setFont(Font.font("Arial", FontWeight.BOLD, 18));
 				
 				TextArea q1Field = new TextArea();
 				q1Field.setMaxWidth(700);
 				q1Field.setPrefHeight(100);
 				
-				// label for the patient info part of the screen
-				Label question2Label = new Label("Question 2:");
+				// label for the 2nd question and field
+				Label question2Label = new Label("Any Mental Health Concerns?:");
 				question2Label.setFont(Font.font("Arial", FontWeight.BOLD, 18));
 				
 				TextArea q2Field = new TextArea();
 				q2Field.setMaxWidth(700);
 				q2Field.setPrefHeight(100);
 				
-				Label question3Label = new Label("Question 3:");
+				// label for the 3rd question and field
+				Label question3Label = new Label("Any Concerns with Past Immunizations or Prescriptions?:");
 				question3Label.setFont(Font.font("Arial", FontWeight.BOLD, 18));
 				
 				TextArea q3Field = new TextArea();
 				q3Field.setMaxWidth(700);
 				q3Field.setPrefHeight(100);
 
-				// send button which sends the prescription to the pharmacy if all fields are filled
+				// save button to preserve answers
 				Button save = new Button("SAVE");
 				save.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				save.setPrefWidth(175);
 				save.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
 				save.setTranslateX(275);
 				save.setTranslateY(30);
-				// event handler for the send prescription button
-				// checks if all the fields needed are filled and if so it will send the prescription
+
+				// checks if all the fields needed are filled and if so it will save answers
 				save.setOnAction(new EventHandler<>() {
 			        	public void handle(ActionEvent event) {
 			        		//ADD
@@ -123,8 +124,7 @@ public class NurseView extends Application {
 				clear.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
 				clear.setTranslateX(275);
 				clear.setTranslateY(30);
-				// event handler for the send prescription button
-				// checks if all the fields needed are filled and if so it will send the prescription
+			//clear button exception handler
 				clear.setOnAction(new EventHandler<>() {
 			        	public void handle(ActionEvent event) {
 			        		q1Field.clear();
@@ -133,6 +133,7 @@ public class NurseView extends Application {
 			        	}
 			        });
 				
+				//hbox for clear and save
 				HBox questionButtons = new HBox();	
 				questionButtons.getChildren().addAll(clear,save);
 				questionButtons.setSpacing(50);
@@ -145,10 +146,10 @@ public class NurseView extends Application {
 			}
 		});
 		
-		// event handler for if the physical button is clicked
+		// event handler for if the vitals button is clicked
 		vitalsTab.setOnAction(new EventHandler<>() {
 			public void handle(ActionEvent event) {
-				// will reset all the colors and clear the right vbox so it can be changed
+				// will reset all the colors and clear the right vbox for next steps
 				if (!right.getChildren().isEmpty()) {
 					right.getChildren().clear();
 					questionsTab.setStyle("");
@@ -157,21 +158,22 @@ public class NurseView extends Application {
 					messagesTab.setStyle("");
 					root.setCenter(right);
 				}
-				// colors the physical button so it shows that it is clicked
+				// colors the vitals button so it shows that it is clicked
 				vitalsTab.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
 				
-				// creates 2 hboxes, one for the labels and one for the text fields to display information in the first 2 rows
+				// creates hboxes for the labels and  for the text fields to display information 
 				HBox vitalsLabels = new HBox();
 				HBox vitalsFields = new HBox();
-				HBox vitalsButtons = new HBox();
 				
-				// creates all the labels and their respective fields to fill in the info for the exam so that it can be added to the first hbox
+				// creates all the labels and their respective fields to fill in the info for the exam so that it can be added to the hboxes
+				//date label and field
 				Label dateLabel = new Label("Date:        ");
 				dateLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				TextField dateField = new TextField();
 				dateField.setTranslateY(-10);
 				dateField.setMaxWidth(85);
 				
+				//weight label and field
 				Label weightLabel = new Label("Weight (lb):");
 				weightLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				weightLabel.setTranslateX(20);
@@ -179,6 +181,7 @@ public class NurseView extends Application {
 				weightField.setTranslateY(-10);
 				weightField.setMaxWidth(90);
 				
+				//height label and field
 				Label heightLabel = new Label("Height (in):");
 				heightLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				heightLabel.setTranslateX(32);
@@ -186,6 +189,7 @@ public class NurseView extends Application {
 				heightField.setTranslateY(-10);
 				heightField.setMaxWidth(90);
 				
+				//body temp label and field
 				Label tempLabel = new Label("Body Temperature (F):");
 				tempLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				tempLabel.setTranslateX(47);
@@ -193,6 +197,7 @@ public class NurseView extends Application {
 				tempField.setTranslateY(-10);
 				tempField.setMaxWidth(150);
 				
+				//blood pressure label and field
 				Label bpLabel = new Label("Blood Pressure (mmHg):");
 				bpLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				bpLabel.setTranslateX(49);
@@ -261,8 +266,25 @@ public class NurseView extends Application {
 				vitalsLabels.setTranslateX(-30);
 				vitalsFields.setTranslateX(-30);
 				
+				// creates a table and all of its columns
+				TableView<String> vitalsTable = new TableView<>();
+				TableColumn<String, String> dateVitCol = new TableColumn<>("Date");
+				TableColumn<String, String> weightVitCol = new TableColumn<>("Weight (lb)");
+				TableColumn<String, String> heightVitCol = new TableColumn<>("Height (in)");
+				TableColumn<String, String> tempVitCol = new TableColumn<>("Body Temperature (F)");
+				TableColumn<String, String> bpVitCol = new TableColumn<>("Blood Pressure (mmHg");
+
+				// adds every column to the table and sets their widths
+				vitalsTable.getColumns().addAll(dateVitCol, weightVitCol, heightVitCol, tempVitCol, bpVitCol);
+				vitalsTable.setMaxWidth(700);
+				dateVitCol.setPrefWidth(100);
+				weightVitCol.setPrefWidth(100);
+				heightVitCol.setPrefWidth(100);
+				tempVitCol.setPrefWidth(150);
+				bpVitCol.setPrefWidth(150);
+				
 				// adds everything to the right vbox and displays it
-				right.getChildren().addAll(vitalsLabels,vitalsFields, buttons);
+				right.getChildren().addAll(vitalsLabels,vitalsFields, buttons, vitalsTable);
 				right.setSpacing(20);
 			}
 		});
