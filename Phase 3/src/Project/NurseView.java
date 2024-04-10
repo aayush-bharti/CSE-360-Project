@@ -3,6 +3,7 @@
 // Assignment : Project
 // Description : Nurse View page for phase 3
 
+
 package Project;
 
 import java.io.*;
@@ -52,15 +53,14 @@ public class NurseView extends Application {
 		back.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 		back.setPrefWidth(175);
 		// event handler for the back button
-		back.setOnAction(new EventHandler<>()
-        {
-        	public void handle(ActionEvent event)
-        	{
-        		Login log = new Login();
-        		log.start(primaryStage);
+		back.setOnAction(new EventHandler<>() {
+	        	public void handle(ActionEvent event)
+	        	{
+	        		Login log = new Login();
+	        		log.start(primaryStage);
+	        	}
         	}
-        }
-        );
+        	);
 
 		// event handler for if the prescriptions button is clicked 
 		questionsTab.setOnAction(new EventHandler<>() {
@@ -72,6 +72,7 @@ public class NurseView extends Application {
 					vitalsTab.setStyle("");
 					historyTab.setStyle("");
 					messagesTab.setStyle("");
+					root.setCenter(right);
 				}
 				// colors the prescriptions button so it shows that it is clicked
 				questionsTab.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
@@ -109,12 +110,12 @@ public class NurseView extends Application {
 				// event handler for the send prescription button
 				// checks if all the fields needed are filled and if so it will send the prescription
 				save.setOnAction(new EventHandler<>() {
-		        	public void handle(ActionEvent event) {
-		        		//ADD
-		        		// if the field is empty, display error, if not send
-		        		int x=1;
-		        	}
-		        });
+			        	public void handle(ActionEvent event) {
+			        		//ADD
+			        		// if the field is empty, display error, if not send
+			        		int x=1;
+			        	}
+			        });
 				
 				Button clear = new Button("CLEAR");
 				clear.setFont(Font.font("Arial", FontWeight.BOLD, 14));
@@ -125,12 +126,12 @@ public class NurseView extends Application {
 				// event handler for the send prescription button
 				// checks if all the fields needed are filled and if so it will send the prescription
 				clear.setOnAction(new EventHandler<>() {
-		        	public void handle(ActionEvent event) {
-		        		q1Field.clear();
-		        		q2Field.clear();
-		        		q3Field.clear();
-		        	}
-		        });
+			        	public void handle(ActionEvent event) {
+			        		q1Field.clear();
+			        		q2Field.clear();
+			        		q3Field.clear();
+			        	}
+			        });
 				
 				HBox questionButtons = new HBox();	
 				questionButtons.getChildren().addAll(clear,save);
@@ -154,6 +155,7 @@ public class NurseView extends Application {
 					vitalsTab.setStyle("");
 					historyTab.setStyle("");
 					messagesTab.setStyle("");
+					root.setCenter(right);
 				}
 				// colors the physical button so it shows that it is clicked
 				vitalsTab.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
@@ -232,10 +234,10 @@ public class NurseView extends Application {
 				clear.setTranslateY(-20);
 				// clears all editable textfields and the radio buttons
 				clear.setOnAction(new EventHandler<>() {
-		        	public void handle(ActionEvent event) {
-
-		        	}
-		        });
+			        	public void handle(ActionEvent event) {
+	
+			        	}
+		       	 	});
 				
 				// creates the save button to save the information from the physical exam
 				Button save = new Button("SAVE");
@@ -245,11 +247,11 @@ public class NurseView extends Application {
 				save.setTranslateY(-20);
 				// checks if all the fields are inputed and saves the information
 				save.setOnAction(new EventHandler<>() {
-		        	public void handle(ActionEvent event) {
-		        		//ADD
-		        		// if all are not empty, save, if not error
-		        	}
-		        });
+			        	public void handle(ActionEvent event) {
+			        		//ADD
+			        		// if all are not empty, save, if not error
+			        	}
+		       	 	});
 				
 				// adds both buttons to the hbox 
 				buttons.getChildren().addAll(clear, save);
@@ -275,6 +277,7 @@ public class NurseView extends Application {
 					vitalsTab.setStyle("");
 					historyTab.setStyle("");
 					messagesTab.setStyle("");
+					root.setCenter(right);
 				}
 				// colors the history button so it shows that it is clicked
 				historyTab.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
@@ -311,6 +314,7 @@ public class NurseView extends Application {
 					vitalsTab.setStyle("");
 					historyTab.setStyle("");
 					messagesTab.setStyle("");
+					root.setCenter(right);
 				}
 				// colors the messages button so it shows that it is clicked
 				messagesTab.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
@@ -349,11 +353,11 @@ public class NurseView extends Application {
 				clear.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
 				// event handler for the clear button
 				clear.setOnAction(new EventHandler<>() {
-		        	public void handle(ActionEvent event) {
-		        		subjField.clear();
-		        		message.clear();
-		        	}
-		        });
+			        	public void handle(ActionEvent event) {
+			        		subjField.clear();
+			        		message.clear();
+			        	}
+		        	});
 				
 				// creates a send button to send the message
 				Button send = new Button("SEND");
@@ -361,11 +365,11 @@ public class NurseView extends Application {
 				send.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				send.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
 				send.setOnAction(new EventHandler<>() {
-		        	public void handle(ActionEvent event) {
-		        		//ADD
-		        		// if field is not empty, send, otherwise error
-		        	}
-		        });
+			        	public void handle(ActionEvent event) {
+			        		//ADD
+			        		// if field is not empty, send, otherwise error
+			        	}
+		        	});
 				// adds the buttons to the hbox
 				buttons.getChildren().addAll(clear, send);
 				buttons.setSpacing(50);
@@ -387,10 +391,15 @@ public class NurseView extends Application {
 				// adds everything to the right vbox
 				right.getChildren().addAll(recipientBox, subjectBox, message, buttons, pastMessages);	
 				right.setSpacing(10);
-				right.setTranslateX(100);
-				right.setTranslateY(20);
+				// copies the right vbox into a temporary vbox to change its position 
+				VBox temp = new VBox();
+				temp.getChildren().addAll(right);
+				
+				temp.setTranslateX(100);
+				temp.setTranslateY(20);
+				
 				// creates a scroll pane so that the screen its scrollable
-				ScrollPane scroll = new ScrollPane(right);
+				ScrollPane scroll = new ScrollPane(temp);
 				root.setCenter(scroll);
 			}
 		});
@@ -424,8 +433,8 @@ public class NurseView extends Application {
 	// function to clear all of the radio buttons passed into it
 	public void clearRadioButton(RadioButton r1, RadioButton r2, RadioButton r3) {
 		r1.setSelected(false);
-    	r2.setSelected(false);
-    	r3.setSelected(false);
+	    	r2.setSelected(false);
+	    	r3.setSelected(false);
 	}
 	
 	// function to clear all the comment textfields
