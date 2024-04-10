@@ -18,7 +18,19 @@ import javafx.geometry.*;
 import javafx.collections.*;
 
 public class PatientSearch extends Application {
-
+	
+	private Patient patient;
+	private Nurse nurse;
+	private Doctor doctor;
+	
+	public PatientSearch(Nurse nurse) {
+		this.nurse = nurse;
+	}
+	
+	public PatientSearch(Doctor doctor) {
+		this.doctor = doctor;
+	}
+	
     public void start(Stage primaryStage) {
     	// the root to hold everything
     	BorderPane root = new BorderPane();
@@ -31,7 +43,7 @@ public class PatientSearch extends Application {
         HBox inputBox = new HBox();
         
         // creates label and textfield that go in the hbox and adds it to the hbox
-        Label nameLabel = new Label("ENTER PATIENT NAME:");
+        Label nameLabel = new Label("ENTER PATIENT USERNAME:");
         nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         
         TextField inputField = new TextField();
@@ -62,10 +74,7 @@ public class PatientSearch extends Application {
         confirm.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         confirm.setOnAction(new EventHandler<>() {
         	public void handle(ActionEvent event) {
-        		// ADD
-        		// if patient exists, go to doctor view, else display error
-        		DoctorView docScreen = new DoctorView();
-        		docScreen.start(primaryStage);
+				
         	}
         });
         
@@ -88,5 +97,6 @@ public class PatientSearch extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+    
 
 }
