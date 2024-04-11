@@ -445,9 +445,9 @@ public class PatientView extends Application {
 				
 				messageTable.setMaxWidth(800);
 				dateColumn.setPrefWidth(70);
-				subjectColumn.setPrefWidth(100);
+				subjectColumn.setPrefWidth(180);
 				messageColumn.setPrefWidth(400);
-				messageTable.setTranslateY(70);
+				messageTable.setTranslateY(150);
 				
 				messageTable.getItems().clear();
 				messageTable.refresh();
