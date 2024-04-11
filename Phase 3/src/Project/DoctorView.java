@@ -547,8 +547,8 @@ public class DoctorView extends Application {
 				tempCol.setPrefWidth(70);
 				heartRateCol.setPrefWidth(70);
 				bpCol.setPrefWidth(150);
-				genResultCol.setPrefWidth(100);
-				entResultCol.setPrefWidth(100);
+				genResultCol.setPrefWidth(120);
+				entResultCol.setPrefWidth(130);
 				lungResultCol.setPrefWidth(100);
 				vascularResultCol.setPrefWidth(100);
 				physicalTable.setTranslateX(-30);
@@ -653,11 +653,11 @@ public class DoctorView extends Application {
 				prescriptionTable.getColumns().addAll(prescDateCol, prescriptionCol, phoneNumberCol, emailCol, insuranceCol, pharmacyCol);
 				prescriptionTable.setMaxWidth(800);
 				prescDateCol.setPrefWidth(100);
-				prescriptionCol.setPrefWidth(100);
+				prescriptionCol.setPrefWidth(150);
 				phoneNumberCol.setPrefWidth(100);
-				emailCol.setPrefWidth(100);
-				insuranceCol.setPrefWidth(100);
-				pharmacyCol.setPrefWidth(100);
+				emailCol.setPrefWidth(150);
+				insuranceCol.setPrefWidth(150);
+				pharmacyCol.setPrefWidth(150);
 				prescriptionTable.setTranslateX(-30);
 				
 				prescriptionTable.getItems().clear();
@@ -701,7 +701,7 @@ public class DoctorView extends Application {
 				immunizationTable.getColumns().addAll(immunizationDateCol, immunizationColumn);
 				immunizationTable.setMaxWidth(800);
 				immunizationDateCol.setPrefWidth(200);
-				immunizationColumn.setPrefWidth(550);
+				immunizationColumn.setPrefWidth(600);
 				immunizationTable.setTranslateX(-30);
 				
 				immunizationTable.getItems().clear();
@@ -832,9 +832,9 @@ public class DoctorView extends Application {
 				
 				messageTable.setMaxWidth(800);
 				dateColumn.setPrefWidth(70);
-				subjectColumn.setPrefWidth(100);
+				subjectColumn.setPrefWidth(180);
 				messageColumn.setPrefWidth(400);
-				messageTable.setTranslateY(70);
+				messageTable.setTranslateY(150);
 				
 				messageTable.getItems().clear();
 				messageTable.refresh();
