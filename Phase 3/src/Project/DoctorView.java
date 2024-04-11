@@ -5,20 +5,36 @@
 
 package Project;
 
-import java.io.*;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+
 import javafx.application.Application;
 import javafx.event.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.text.*;
 import javafx.stage.Stage;
 import javafx.geometry.*;
-import javafx.collections.*;
 
 public class DoctorView extends Application {
-
+	private Doctor doctor;
+	private Patient patient;
+	
+	static LocalDateTime time;
+	static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss");
+	
+	public DoctorView(Doctor doctor) {
+		this.doctor = doctor;
+	}
+	
+	public DoctorView(Doctor doctor, Patient patient) {
+		this.doctor = doctor;
+		this.patient = patient;
+	}
+	
 	public void start(Stage primaryStage) {
 		// the root to hold everything
 		BorderPane root = new BorderPane();
@@ -28,7 +44,7 @@ public class DoctorView extends Application {
 		VBox left = new VBox();
 
 		// sets up the left vbox by making all the labels and buttons in it
-		Label patientName = new Label("INSERT Patient Name");
+		Label patientName = new Label(patient.getFullName());
 		patientName.setStyle("-fx-text-fill: #00005a;");
 		patientName.setFont(Font.font("Arial", FontWeight.BOLD, 18));
 		
@@ -84,6 +100,7 @@ public class DoctorView extends Application {
 				Label number = new Label("Phone Number:");
 				number.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				TextField numField = new TextField();
+				numField.setText(patient.getPhoneNumber());
 				numField.setEditable(false);
 				numField.setTranslateY(-10);
 				
@@ -91,6 +108,7 @@ public class DoctorView extends Application {
 				email.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				email.setTranslateX(-15);
 				TextField emailField = new TextField();
+				emailField.setText(patient.getEmail());
 				emailField.setEditable(false);
 				emailField.setTranslateY(-10);
 				
@@ -98,6 +116,7 @@ public class DoctorView extends Application {
 				insurance.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				insurance.setTranslateX(32);
 				TextField insurField = new TextField();
+				insurField.setText(patient.getInsurance());
 				insurField.setEditable(false);
 				insurField.setTranslateY(-10);
 				
@@ -105,6 +124,7 @@ public class DoctorView extends Application {
 				pharmacy.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				pharmacy.setTranslateX(-10);
 				TextField pharmacyField = new TextField();
+				pharmacyField.setText(patient.getPharmacy());
 				pharmacyField.setEditable(false);
 				pharmacyField.setTranslateY(-10);
 				
@@ -127,8 +147,9 @@ public class DoctorView extends Application {
 				// checks if all the fields needed are filled and if so it will send the prescription
 				send.setOnAction(new EventHandler<>() {
 		        	public void handle(ActionEvent event) {
-		        		//ADD
-		        		// if the field is empty, display error, if not send
+		        		Database.createPharmacyFile(patient.getUsername(), prescripField.getText(), numField.getText(), 
+													emailField.getText(), insurField.getText(), pharmacyField.getText());
+		        		
 		        	}
 		        });
 				
@@ -165,6 +186,7 @@ public class DoctorView extends Application {
 				Label first = new Label("First Name:");
 				first.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				TextField firstField = new TextField();
+				firstField.setText(patient.getFirstName());
 				firstField.setEditable(false);
 				firstField.setTranslateY(-10);
 				
@@ -172,6 +194,7 @@ public class DoctorView extends Application {
 				last.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				last.setTranslateX(12);
 				TextField lastField = new TextField();
+				lastField.setText(patient.getLastName());
 				lastField.setEditable(false);
 				lastField.setTranslateY(-10);
 				
@@ -179,6 +202,8 @@ public class DoctorView extends Application {
 				dob.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				dob.setTranslateX(25);
 				TextField dobField = new TextField();
+				dobField.setText(patient.getDOB());
+				dobField.setEditable(false);
 				dobField.setTranslateY(-10);
 				
 				Label exam = new Label("Date of Exam:");
@@ -263,9 +288,25 @@ public class DoctorView extends Application {
 				
 				// creates radio buttons and an hbox for the radio buttons for the first row
 				HBox rb1 = new HBox();
-				RadioButton yes1 = new RadioButton("Yes");
-				RadioButton no1 = new RadioButton("No");
-				RadioButton notExamined1 = new RadioButton("Not Examined");
+				String[] genAppearanceResults = {""};
+				RadioButton yes1 = new RadioButton("Normal");
+				yes1.setOnAction(new EventHandler<>() {
+		        	public void handle(ActionEvent event) {
+		        		genAppearanceResults[0] = "Normal";
+		        	}
+		        });
+				RadioButton no1 = new RadioButton("Abnormal");
+				no1.setOnAction(new EventHandler<>() {
+		        	public void handle(ActionEvent event) {
+		        		genAppearanceResults[0] = "Abnormal";
+		        	}
+		        });
+				RadioButton notExamined1 = new RadioButton("Unexamined");
+				notExamined1.setOnAction(new EventHandler<>() {
+		        	public void handle(ActionEvent event) {
+		        		genAppearanceResults[0] = "Unexamined";
+		        	}
+		        });
 				
 				// adds the buttons to a toggle group to ensure only 1 can be selected at a time
 				ToggleGroup g1 = new ToggleGroup();
@@ -278,12 +319,29 @@ public class DoctorView extends Application {
 				
 				// creates radio buttons and an hbox for the radio buttons for the second row
 				HBox rb2 = new HBox();
-				RadioButton yes2 = new RadioButton("Yes");
-				RadioButton no2 = new RadioButton("No");
-				RadioButton notExamined2 = new RadioButton("Not Examined");
+				String[] earResults = {""};
+				RadioButton yes2 = new RadioButton("Normal");
+				yes2.setOnAction(new EventHandler<>() {
+		        	public void handle(ActionEvent event) {
+		        		earResults[0] = "Normal";
+		        	}
+		        });
+				RadioButton no2 = new RadioButton("Abnormal");
+				no2.setOnAction(new EventHandler<>() {
+		        	public void handle(ActionEvent event) {
+		        		earResults[0] = "Abnormal";
+		        	}
+		        });
+				RadioButton notExamined2 = new RadioButton("Unexamined");
+				notExamined2.setOnAction(new EventHandler<>() {
+		        	public void handle(ActionEvent event) {
+		        		earResults[0] = "Unexamined";
+		        	}
+		        });
 				
 				// adds the buttons to a toggle group to ensure only 1 can be selected at a time
 				ToggleGroup g2 = new ToggleGroup();
+				String[] lungResults = {""};
 		        yes2.setToggleGroup(g2);
 		        no2.setToggleGroup(g2);
 		        notExamined2.setToggleGroup(g2);
@@ -293,9 +351,24 @@ public class DoctorView extends Application {
 				
 				// creates radio buttons and an hbox for the radio buttons for the third row
 				HBox rb3 = new HBox();
-				RadioButton yes3 = new RadioButton("Yes");
-				RadioButton no3 = new RadioButton("No");
-				RadioButton notExamined3 = new RadioButton("Not Examined");
+				RadioButton yes3 = new RadioButton("Normal");
+				yes3.setOnAction(new EventHandler<>() {
+		        	public void handle(ActionEvent event) {
+		        		lungResults[0] = "Normal";
+		        	}
+		        });
+				RadioButton no3 = new RadioButton("Abnormal");
+				no3.setOnAction(new EventHandler<>() {
+		        	public void handle(ActionEvent event) {
+		        		lungResults[0] = "Abnormal";
+		        	}
+		        });
+				RadioButton notExamined3 = new RadioButton("Unexamined");
+				notExamined3.setOnAction(new EventHandler<>() {
+		        	public void handle(ActionEvent event) {
+		        		lungResults[0] = "Unexamined";
+		        	}
+		        });
 				
 				// adds the buttons to a toggle group to ensure only 1 can be selected at a time
 				ToggleGroup g3 = new ToggleGroup();
@@ -308,9 +381,26 @@ public class DoctorView extends Application {
 				
 				// creates radio buttons and an hbox for the radio buttons for the fourth row
 				HBox rb4 = new HBox();
-				RadioButton yes4 = new RadioButton("Yes");
-				RadioButton no4 = new RadioButton("No");
-				RadioButton notExamined4 = new RadioButton("Not Examined");
+				String[] vascularResults = {""};
+				RadioButton yes4 = new RadioButton("Normal");
+				yes4.setOnAction(new EventHandler<>() {
+		        	public void handle(ActionEvent event) {
+		        		vascularResults[0] = "Normal";
+		        	}
+		        });
+
+				RadioButton no4 = new RadioButton("Abnormal");
+				no4.setOnAction(new EventHandler<>() {
+		        	public void handle(ActionEvent event) {
+		        		vascularResults[0] = "Abnormal";
+		        	}
+		        });
+				RadioButton notExamined4 = new RadioButton("Unexamined");
+				notExamined4.setOnAction(new EventHandler<>() {
+		        	public void handle(ActionEvent event) {
+		        		vascularResults[0] = "Unexamined";
+		        	}
+		        });
 				
 				// adds the buttons to a toggle group to ensure only 1 can be selected at a time
 				ToggleGroup g4 = new ToggleGroup();
@@ -394,8 +484,11 @@ public class DoctorView extends Application {
 				// checks if all the fields are inputed and saves the information
 				save.setOnAction(new EventHandler<>() {
 		        	public void handle(ActionEvent event) {
-		        		//ADD
-		        		// if all are not empty, save, if not error
+		        		Database.createPhysicalFile(firstField.getText(), lastField.getText(), dobField.getText(), 
+		        				examField.getText(), tempField.getText(), heartField.getText(), bpField.getText(), 
+		        				idField.getText(), genAppearanceResults[0], earResults[0], lungResults[0], 
+								vascularResults[0], comment1.getText(), comment2.getText(), comment3.getText(), 
+								comment4.getText());
 		        	}
 		        });
 				
@@ -428,43 +521,224 @@ public class DoctorView extends Application {
 				
 				// ADD VALUES TO TABLE
 				// creates a table and all of its columns
-				TableView<String> histTable = new TableView<>();
-				TableColumn<String, String> dateCol = new TableColumn<>("Date");
-				TableColumn<String, String> weightCol = new TableColumn<>("Weight(lb)");
-				TableColumn<String, String> heightCol = new TableColumn<>("Height(in)");
-				TableColumn<String, String> tempCol = new TableColumn<>("Body Temperature(F)");
-				TableColumn<String, String> bpCol = new TableColumn<>("Blood Pressure(mmHg)");
-				TableColumn<String, String> healthCol = new TableColumn<>("Health Issues");
-				TableColumn<String, String> medCol = new TableColumn<>("Medications Prescribed");
+				TableView<Physical> physicalTable = new TableView<Physical>();
+				TableColumn<Physical, String> dateCol = new TableColumn<Physical, String>("Date");
+				TableColumn<Physical, Integer> tempCol = new TableColumn<Physical, Integer>("Body Temperature(F)");
+				TableColumn<Physical, String> heartRateCol = new TableColumn<Physical, String>("Heart Rate (bpm)");
+				TableColumn<Physical, String> bpCol = new TableColumn<Physical, String>("Blood Pressure(mmHg)");				
+				TableColumn<Physical, String> genResultCol = new TableColumn<Physical, String>("General Appearance");
+				TableColumn<Physical, String> entResultCol = new TableColumn<Physical, String>("Ear, Nose, and Throat");
+				TableColumn<Physical, String> lungResultCol = new TableColumn<Physical, String>("Chest and Lungs");
+				TableColumn<Physical, String> vascularResultCol = new TableColumn<Physical, String>("Vascular");				
 				
-				
+				dateCol.setCellValueFactory(new PropertyValueFactory<Physical, String>("examDate"));
+				tempCol.setCellValueFactory(new PropertyValueFactory<Physical, Integer>("temperature"));
+				heartRateCol.setCellValueFactory(new PropertyValueFactory<Physical, String>("heartRate"));
+				bpCol.setCellValueFactory(new PropertyValueFactory<Physical, String>("bloodPressure"));
+				genResultCol.setCellValueFactory(new PropertyValueFactory<Physical, String>("appearanceResult"));
+				entResultCol.setCellValueFactory(new PropertyValueFactory<Physical, String>("entResult"));
+				lungResultCol.setCellValueFactory(new PropertyValueFactory<Physical, String>("lungResult"));
+				vascularResultCol.setCellValueFactory(new PropertyValueFactory<Physical, String>("vascularResult"));
+
 				// adds every column to the table and sets their widths
-				histTable.getColumns().addAll(dateCol, weightCol, heightCol, tempCol, bpCol, healthCol, medCol);
-				histTable.setMaxWidth(800);
+				physicalTable.getColumns().addAll(dateCol, tempCol, heartRateCol, bpCol, genResultCol, entResultCol, lungResultCol, vascularResultCol);
+				physicalTable.setMaxWidth(800);
 				dateCol.setPrefWidth(60);
-				weightCol.setPrefWidth(70);
-				heightCol.setPrefWidth(70);
-				tempCol.setPrefWidth(150);
+				tempCol.setPrefWidth(70);
+				heartRateCol.setPrefWidth(70);
 				bpCol.setPrefWidth(150);
-				healthCol.setPrefWidth(100);
-				medCol.setPrefWidth(150);
-				histTable.setTranslateX(-20);
+				genResultCol.setPrefWidth(100);
+				entResultCol.setPrefWidth(100);
+				lungResultCol.setPrefWidth(100);
+				vascularResultCol.setPrefWidth(100);
+				physicalTable.setTranslateX(-30);
 				
-				// ADD VALUES TO IMMUNIZATION FIELD
-				// creates a hbox that will display the immunization records
-				HBox immunizationBox = new HBox();
-				Label immunization = new Label("IMMUNIZATIONS:");
-				immunization.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-				TextField immunizationField = new TextField();
-				immunizationField.setTranslateY(-5);
-				immunizationField.setMinWidth(400);
-				immunizationBox.getChildren().addAll(immunization, immunizationField);
-				immunizationBox.setSpacing(20);
+				physicalTable.getItems().clear();
+				physicalTable.refresh();
+				ArrayList<Physical> physicalExams = patient.getPhysicalExams(patient.getUsername());
+				if (physicalExams != null) {
+					for (Physical exam : physicalExams) {
+						String examDate = exam.getExamDate();
+						String temperature = Integer.toString(exam.getTemperature());
+						String heartRate = exam.getHeartRate();
+						String bloodPressure = exam.getBloodPressure();
+						String appearanceResult = exam.getAppearanceResult();
+						String entResult = exam.getEntResult();
+						String lungResult = exam.getLungResult();
+						String vascularResult = exam.getVascularResult();
+						System.out.println(examDate);
+						System.out.println(temperature);
+						System.out.println(heartRate);
+						System.out.println(bloodPressure);
+						System.out.println(appearanceResult);
+						System.out.println(entResult);
+						System.out.println(lungResult);
+						System.out.println(vascularResult);
+						System.out.println("===============");
+					}
+					for (Physical exam : physicalExams) {
+						String examDate = exam.getExamDate();
+						int temperature = exam.getTemperature();
+						String heartRate = exam.getHeartRate();
+						String bloodPressure = exam.getBloodPressure();
+						String appearanceResult = exam.getAppearanceResult();
+						String entResult = exam.getEntResult();
+						String lungResult = exam.getLungResult();
+						String vascularResult = exam.getVascularResult();
+						physicalTable.getItems().add(new Physical(examDate, temperature, heartRate, bloodPressure, appearanceResult, entResult, lungResult, vascularResult));
+					}
+				}
 				
+				TableView<Questionnaire> questionnaireTable = new TableView<Questionnaire>();
+				TableColumn<Questionnaire, String> dateColumn = new TableColumn<Questionnaire, String>("Date");
+				TableColumn<Questionnaire, String> physicalCol = new TableColumn<Questionnaire, String>("Physical Question Response");
+				TableColumn<Questionnaire, String> mentalCol = new TableColumn<Questionnaire, String>("Mental Question Response");
+				TableColumn<Questionnaire, String> immunizationCol = new TableColumn<Questionnaire, String>("Immunization Question Response");						
+				
+				dateColumn.setCellValueFactory(new PropertyValueFactory<Questionnaire, String>("dateTime"));
+				physicalCol.setCellValueFactory(new PropertyValueFactory<Questionnaire, String>("physicalQuestion"));
+				mentalCol.setCellValueFactory(new PropertyValueFactory<Questionnaire, String>("mentalQuestion"));
+				immunizationCol.setCellValueFactory(new PropertyValueFactory<Questionnaire, String>("immunizationQuestion"));
+
+				// adds every column to the table and sets their widths
+				questionnaireTable.getColumns().addAll(dateColumn, physicalCol, mentalCol, immunizationCol);
+				questionnaireTable.setMaxWidth(800);
+				dateColumn.setPrefWidth(150);
+				physicalCol.setPrefWidth(150);
+				mentalCol.setPrefWidth(150);
+				immunizationCol.setPrefWidth(150);
+				questionnaireTable.setTranslateX(-30);
+				
+				questionnaireTable.getItems().clear();
+				questionnaireTable.refresh();
+				ArrayList<Questionnaire> questionnaires = patient.getQuestionnaires(patient.getUsername());
+				if (questionnaires != null) {
+					for (Questionnaire questionnaire : questionnaires) {
+						String questionnaireTime = questionnaire.getDateTime();
+						String physicalQuestion = questionnaire.getPhysicalQuestion();
+						String mentalQuestion = questionnaire.getMentalQuestion();
+						String immunizationQuestion = questionnaire.getImmunizationQuestion();
+						System.out.println(questionnaireTime);
+						System.out.println(physicalQuestion);
+						System.out.println(mentalQuestion);
+						System.out.println(immunizationQuestion);
+						System.out.println("=======================");
+					}
+
+					for (Questionnaire questionnaire : questionnaires) {
+						String questionnaireTime = questionnaire.getDateTime();
+						String physicalQuestion = questionnaire.getPhysicalQuestion();
+						String mentalQuestion = questionnaire.getMentalQuestion();
+						String immunizationQuestion = questionnaire.getImmunizationQuestion();
+						questionnaireTable.getItems().add(new Questionnaire(questionnaireTime, physicalQuestion, mentalQuestion, immunizationQuestion));
+					}
+				}
+
+				TableView<Prescription> prescriptionTable = new TableView<Prescription>();
+				TableColumn<Prescription, String> prescDateCol = new TableColumn<Prescription, String>("Date");
+				TableColumn<Prescription, String> prescriptionCol = new TableColumn<Prescription, String>("Prescriptions");	
+				TableColumn<Prescription, String> phoneNumberCol = new TableColumn<Prescription, String>("Phone Number");	
+				TableColumn<Prescription, String> emailCol = new TableColumn<Prescription, String>("Email");	
+				TableColumn<Prescription, String> insuranceCol = new TableColumn<Prescription, String>("Insurance Provider");
+				TableColumn<Prescription, String> pharmacyCol = new TableColumn<Prescription, String>("Preferred Pharmacy");	
+				
+				prescDateCol.setCellValueFactory(new PropertyValueFactory<Prescription, String>("dateTime"));
+				prescriptionCol.setCellValueFactory(new PropertyValueFactory<Prescription, String>("prescriptionBody"));
+				phoneNumberCol.setCellValueFactory(new PropertyValueFactory<Prescription, String>("phoneNumber"));
+				emailCol.setCellValueFactory(new PropertyValueFactory<Prescription, String>("email"));
+				insuranceCol.setCellValueFactory(new PropertyValueFactory<Prescription, String>("insuranceProvider"));
+				pharmacyCol.setCellValueFactory(new PropertyValueFactory<Prescription, String>("preferredPharmacy"));
+
+				// adds every column to the table and sets their widths
+				prescriptionTable.getColumns().addAll(prescDateCol, prescriptionCol, phoneNumberCol, emailCol, insuranceCol, pharmacyCol);
+				prescriptionTable.setMaxWidth(800);
+				prescDateCol.setPrefWidth(100);
+				prescriptionCol.setPrefWidth(100);
+				phoneNumberCol.setPrefWidth(100);
+				emailCol.setPrefWidth(100);
+				insuranceCol.setPrefWidth(100);
+				pharmacyCol.setPrefWidth(100);
+				prescriptionTable.setTranslateX(-30);
+				
+				prescriptionTable.getItems().clear();
+				prescriptionTable.refresh();
+				ArrayList<Prescription> prescriptions = patient.getPrescriptions(patient.getUsername());
+				if (prescriptions != null) {
+					for (Prescription prescription : prescriptions) {
+						String prescriptionTime = prescription.getDateTime();
+						String prescriptionBody = prescription.getPrescriptionBody();
+						String phoneNumber = prescription.getPhoneNumber();
+						String email = prescription.getEmail();
+						String insuranceProvider = prescription.getInsuranceProvider();
+						String preferredPharmacy = prescription.getPreferredPharmacy();
+						System.out.println(prescriptionTime);
+						System.out.println(prescriptionBody);
+						System.out.println(phoneNumber);
+						System.out.println(email);
+						System.out.println(insuranceProvider);
+						System.out.println(preferredPharmacy);
+						System.out.println("===============");
+					}
+					for (Prescription prescription : prescriptions) {
+						String prescriptionTime = prescription.getDateTime();
+						String prescriptionBody = prescription.getPrescriptionBody();
+						String phoneNumber = prescription.getPhoneNumber();
+						String email = prescription.getEmail();
+						String insuranceProvider = prescription.getInsuranceProvider();
+						String preferredPharmacy = prescription.getPreferredPharmacy();
+						prescriptionTable.getItems().add(new Prescription(prescriptionTime, prescriptionBody, phoneNumber, email, insuranceProvider, preferredPharmacy));
+					}
+				}
+
+				TableView<Immunization> immunizationTable = new TableView<Immunization>();
+				TableColumn<Immunization, String> immunizationDateCol = new TableColumn<Immunization, String>("Date");
+				TableColumn<Immunization, String> immunizationColumn = new TableColumn<Immunization, String>("Immunizations");						
+				
+				immunizationDateCol.setCellValueFactory(new PropertyValueFactory<Immunization, String>("dateTime"));
+				immunizationColumn.setCellValueFactory(new PropertyValueFactory<Immunization, String>("immunizationQuestion"));
+
+				// adds every column to the table and sets their widths
+				immunizationTable.getColumns().addAll(immunizationDateCol, immunizationColumn);
+				immunizationTable.setMaxWidth(800);
+				immunizationDateCol.setPrefWidth(200);
+				immunizationColumn.setPrefWidth(550);
+				immunizationTable.setTranslateX(-30);
+				
+				immunizationTable.getItems().clear();
+				immunizationTable.refresh();
+				ArrayList<Immunization> immunizations = patient.getImmunizations(patient.getUsername());
+				if (immunizations != null) {
+					for (Immunization immunization : immunizations) {
+						String immunizationTime = immunization.getDateTime();
+						String immunizationQuestion = immunization.getImmunizationQuestion();
+						System.out.println(immunizationTime);
+						System.out.println(immunizationQuestion);
+						System.out.println("==================");
+					}
+					for (Immunization immunization : immunizations) {
+						String immunizationTime = immunization.getDateTime();
+						String immunizationQuestion = immunization.getImmunizationQuestion();
+						immunizationTable.getItems().add(new Immunization(immunizationTime, immunizationQuestion));
+					}
+				}
 				
 				// adds everything to the right vbox and displays it
-				right.getChildren().addAll(histTable, immunizationBox);	
+				right.getChildren().addAll(physicalTable, questionnaireTable, prescriptionTable, immunizationTable);	
 				right.setSpacing(20);
+				
+				VBox temp = new VBox();
+				temp.getChildren().addAll(right);
+				
+				temp.setTranslateX(35);
+				temp.setTranslateY(25);
+				
+				// creates a scroll pane so that the screen its scrollable
+				ScrollPane scroll = new ScrollPane(temp);
+				scroll.setFitToWidth(true); 
+				scroll.setPrefViewportWidth(300);
+				scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER); 
+				scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+				root.setCenter(scroll);
 			}
 		});
 		
@@ -486,7 +760,7 @@ public class DoctorView extends Application {
 				// creates an hbox for the recipient and recipient name labels
 				HBox recipientBox = new HBox();
 				Label recipient = new Label("RECIPIENT:");	
-				Label recipientName = new Label("INSERT PATIENT NAME");
+				Label recipientName = new Label(patient.getFullName());
 				recipient.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				recipientName.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				recipientBox.getChildren().addAll(recipient, recipientName);
@@ -506,8 +780,8 @@ public class DoctorView extends Application {
 				TextArea message = new TextArea("");
 				message.setMaxWidth(700);
 				message.setPrefHeight(300);
-				
-				// creates an hbox for the clear and send buttons
+								
+				// creates an hbox for the clear button
 				HBox buttons = new HBox();
 				
 				// creates a button to clear the subject and message fields
@@ -520,7 +794,7 @@ public class DoctorView extends Application {
 		        	public void handle(ActionEvent event) {
 		        		subjField.clear();
 		        		message.clear();
-		        	}
+;		        	}
 		        });
 				
 				// creates a send button to send the message
@@ -530,8 +804,10 @@ public class DoctorView extends Application {
 				send.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
 				send.setOnAction(new EventHandler<>() {
 		        	public void handle(ActionEvent event) {
-		        		//ADD
-		        		// if field is not empty, send, otherwise error
+		        		time = LocalDateTime.now();
+						String timeString = time.format(formatter);
+		        		Database.createMessageFile("doctor", doctor.getUsername(), patient.getUsername(), 
+		        									timeString, subjField.getText(), message.getText());
 		        	}
 		        });
 				// adds the buttons to the hbox
@@ -541,19 +817,51 @@ public class DoctorView extends Application {
 				buttons.setTranslateY(30);
 				
 				// creates a table to view past messages with subject and date as columns
-				TableView<String> pastMessages = new TableView<>();
-				TableColumn<String, String> subjCol = new TableColumn<>("PREVIOUS MESSAGES");
-				TableColumn<String, String> dateCol = new TableColumn<>("DATE");
-				// adds the columns to the table and sets width
-				pastMessages.getColumns().addAll(subjCol, dateCol);
-				subjCol.setPrefWidth(400);
-				dateCol.setPrefWidth(100);
-				pastMessages.setMaxWidth(600);
-				pastMessages.setMinHeight(600);
-				pastMessages.setTranslateY(80);
+				TableView<Message> messageTable = new TableView<Message>();
+				TableColumn<Message, String> dateColumn = new TableColumn<Message, String>("Date");
+				TableColumn<Message, String> subjectColumn = new TableColumn<Message, String>("Subject");
+				TableColumn<Message, String> messageColumn = new TableColumn<Message, String>("Message Body");
+
 				
+				dateColumn.setCellValueFactory(new PropertyValueFactory<Message, String>("dateTime"));
+				subjectColumn.setCellValueFactory(new PropertyValueFactory<Message, String>("subject"));
+				messageColumn.setCellValueFactory(new PropertyValueFactory<Message, String>("messageBody"));
+
+				// adds every column to the table and sets their widths
+				messageTable.getColumns().addAll(dateColumn, subjectColumn, messageColumn);
+				
+				messageTable.setMaxWidth(800);
+				dateColumn.setPrefWidth(70);
+				subjectColumn.setPrefWidth(100);
+				messageColumn.setPrefWidth(400);
+				messageTable.setTranslateY(70);
+				
+				messageTable.getItems().clear();
+				messageTable.refresh();
+				ArrayList<Message> messages = doctor.getMessages(doctor.getUsername(), patient.getUsername());
+				if (messages != null) {
+					for (Message localMessage : messages) {
+						String messageTime = localMessage.getDateTime();
+						String messageRecipient = localMessage.getRecipient();
+						String messageSubject = localMessage.getSubject();
+						String messageBody = localMessage.getMessageBody();				
+						System.out.println(messageTime);
+						System.out.println(messageRecipient);
+						System.out.println(messageSubject);
+						System.out.println(messageBody);
+						System.out.println("===============");
+					}
+					for (Message localMessage : messages) {
+						String messageTime = localMessage.getDateTime();
+						String messageRecipient = localMessage.getRecipient();
+						String messageSubject = localMessage.getSubject();
+						String messageBody = localMessage.getMessageBody();						
+						messageTable.getItems().add(new Message(messageTime, messageRecipient, messageSubject, messageBody));
+					}
+				}
+
 				// adds everything to the right vbox
-				right.getChildren().addAll(recipientBox, subjectBox, message, buttons, pastMessages);	
+				right.getChildren().addAll(recipientBox, subjectBox, message, buttons, messageTable);	
 				right.setSpacing(10);
 				
 				// copies the right vbox into a temporary vbox to change its position 
@@ -570,10 +878,10 @@ public class DoctorView extends Application {
 		});
 		
 		// adds the label in the left vbox
-		Label docName = new Label("INSERT Doc ");
+		Label docName = new Label("Dr. " + doctor.getFullName());
 		docName.setPrefWidth(175);
 		docName.setStyle("-fx-text-fill: #00005a;");
-		docName.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+		docName.setFont(Font.font("Arial", FontWeight.BOLD, 18));
 		// adds the back button to the left vbox
 		Button back = new Button("BACK");
 		back.setFont(Font.font("Arial", FontWeight.BOLD, 14));
@@ -582,7 +890,7 @@ public class DoctorView extends Application {
         back.setOnAction(new EventHandler<>() {
         	public void handle(ActionEvent event) {
         		// goes back to the patient search screen if a new patient wants to be selected or they want to logout
-        		PatientSearch searchScreen = new PatientSearch();
+        		PatientSearch searchScreen = new PatientSearch(doctor);
         		searchScreen.start(primaryStage);
         	}
         });
@@ -622,6 +930,8 @@ public class DoctorView extends Application {
 		t3.clear();
 		t4.clear();
 	}
+
+	public static void main(String[] args) {
+        launch(args);
+    }
 }
-
-

@@ -17,6 +17,12 @@ import javafx.stage.Stage;
 import javafx.geometry.*;
 import javafx.collections.*;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.sql.PreparedStatement;
+
 public class PatientSearch extends Application {
 	
 	private Patient patient;
@@ -74,9 +80,50 @@ public class PatientSearch extends Application {
         confirm.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         confirm.setOnAction(new EventHandler<>() {
         	public void handle(ActionEvent event) {
+        		String username = inputField.getText();
+                if (username.isEmpty()) {
+                	Database.showAlert("Left Blank");
+                } else {
+                	patient = Database.patientSearch(username);
+                	if (patient != null) {
+                		if (doctor != null) {
+                			try {
+                				Class.forName("com.mysql.cj.jdbc.Driver");
+                				Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/Project", "ntyagi", "tuesdayteam10");
+                				Statement statement = connection.createStatement();
+                				statement.executeUpdate("UPDATE PatientTable SET AssociateDoctor = '" + doctor.getUsername() + 
+                										"' WHERE Username = '" + username + "'");	
+                				connection.close();
+                			} catch (Exception exception) {
+                				System.out.println("Inside !");
+                				Database.showAlert("No User");
+                			}
+            				DoctorView doctorView = new DoctorView(doctor, patient);
+    						doctorView.start(primaryStage);
+            			} else if (nurse != null) {
+            				try {
+                				Class.forName("com.mysql.cj.jdbc.Driver");
+                				Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/Project", "ntyagi", "tuesdayteam10");
+                				Statement statement = connection.createStatement();
+                				statement.executeUpdate("UPDATE PatientTable SET AssociateNurse = '" + nurse.getUsername() + 
+                										"' WHERE Username = '" + username + "'");	
+                				connection.close();
+                			} catch (Exception exception) {
+                				System.out.println("Inside #");
+                				Database.showAlert("No User");
+                			}
+            				NurseView nurseView = new NurseView(nurse, patient);
+    						nurseView.start(primaryStage);
+    					}
+                	} else {
+                		Database.showAlert("No User");
+                	}
+                }
 				
         	}
         });
+        
+        
         
         // adds the buttons to the hbox
         buttons.getChildren().addAll(logout, confirm);
@@ -98,5 +145,9 @@ public class PatientSearch extends Application {
         primaryStage.show();
     }
     
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 
 }

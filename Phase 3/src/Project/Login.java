@@ -25,6 +25,8 @@ import javafx.stage.Stage;
 
 public class Login extends Application {
 
+    String lastPressed = "";
+
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Clinic");
 
@@ -76,19 +78,10 @@ public class Login extends Application {
         patient.setPrefWidth(100);
         patient.setPrefHeight(45);
         patient.setToggleGroup(roles);
-        
-        // checking if patient selected then color that radiobutton to signify
-        patient.selectedProperty().addListener((observable, oldValue, selected) -> 
-        {
-        	if (selected) 
-            {
-                patient.setStyle("-fx-background-color: #9AB4DF;");
-            }
-            
-            else
-            {
-                patient.setStyle("-fx-background-color: #A8D1C3;");
-            }
+        patient.setOnAction(new EventHandler<>() {
+        	public void handle(ActionEvent event) {
+        		lastPressed = "patient";
+        	}
         });
         
         // nurse radio button to be pressed if a nurse wants to sign in
@@ -97,19 +90,10 @@ public class Login extends Application {
         nurse.setPrefWidth(100);
         nurse.setPrefHeight(45);
         nurse.setToggleGroup(roles);
-        
-        // checking if nurse selected then color that radiobutton to signify
-        nurse.selectedProperty().addListener((observable, oldValue, selected) -> 
-        {
-            if (selected) 
-            {
-                nurse.setStyle("-fx-background-color: #9AB4DF;");
-            }
-            
-            else
-            {
-                nurse.setStyle("-fx-background-color: #A8D1C3;");
-            }
+        nurse.setOnAction(new EventHandler<>() {
+        	public void handle(ActionEvent event) {
+        		lastPressed = "nurse";
+        	}
         });
         
         // doctor radiobutton to be pressed if a doctor wants to sign in
@@ -118,19 +102,10 @@ public class Login extends Application {
         doctor.setPrefWidth(100);
         doctor.setPrefHeight(45);
         doctor.setToggleGroup(roles);
-        
-        // checking if doctor selected then color that radiobutton to signify
-        doctor.selectedProperty().addListener((observable, oldValue, selected) -> 
-        {
-            if (selected) 
-            {
-                doctor.setStyle("-fx-background-color: #9AB4DF;");
-            }
-            
-            else
-            {
-                doctor.setStyle("-fx-background-color: #A8D1C3;");
-            }
+        doctor.setOnAction(new EventHandler<>() {
+        	public void handle(ActionEvent event) {
+        		lastPressed = "doctor";
+        	}
         });
         
         // creating the VBox for the left side and adding all the elements to it
@@ -184,44 +159,11 @@ public class Login extends Application {
         BorderPane.setMargin(rightSide, new Insets(0, 100, 0, 0));
         
         // if the sign in button is clicked, this logic will be carried out
-        signIn.setOnAction(new EventHandler<>()
-        {
-        	public void handle(ActionEvent event)
-        	{
-        		// if the doctor is selected trying to sign in carry out this logic
-        		if (doctor.isSelected())
-        		{
-        			// checking if the username and the password are what any doctor would use to sign in to their view
-        			if ((username.getText().equals("doc")) && (password.getText().equals("doc"))) // generic one cuz doctors dont need to make their own
-        			{
-        				// opening the patient search view
-        				PatientSearch searchScreen = new PatientSearch();
-            	        searchScreen.start(primaryStage);
-        			}
-        		}
-        		
-        		// if the patient is selected then we have to check credentials with database to be able to determine if we can go on to next page or not
-        		else if (patient.isSelected())
-        		{
-        			// ADD - add in logic here about checking credentials with database to see if patient exists otherwise sign up
-        			PatientView patView = new PatientView();
-        			patView.start(primaryStage);
-        		}
-        		
-        		// if nurse is selected carry out this logic
-        		else
-        		{
-        			// checking if the username and the password are what any nurse would use to sign in to their view
-        			if ((username.getText().equals("nurse")) && (password.getText().equals("nurse"))) // nurse one cuz nurses dont need to make their own
-        			{
-        				// opening the nurse search view
-        				NurseView nurView = new NurseView();
-            			nurView.start(primaryStage);
-        			}
-        		}
+        signIn.setOnAction(new EventHandler<>() {
+        	public void handle(ActionEvent event) {
+        		Database.signIn(primaryStage, username.getText(), password.getText(), lastPressed);
         	}
-        }
-        );
+        });
         
         // if the sign up button is clicked, this logic will be carried out
         signUp.setOnAction(new EventHandler<>()
@@ -345,30 +287,18 @@ public class Login extends Application {
                 }
                 );
                 
-                // if the patient clicks sign up within the sign up screen, conduct this logic
-                signUpNested.setOnAction(new EventHandler<>()
-                {
-                	public void handle(ActionEvent event)
-                	{
-                		// if there are any empty fields show the error message
-                		if ((firstNameField.getText().isEmpty()) || (lastNameField.getText().isEmpty()) || (birthField.getText().isEmpty()) || (phoneField.getText().isEmpty()) || (emailField.getText().isEmpty()) || (usernameField.getText().isEmpty()) || (passwordField.getText().isEmpty()))
-                		{
-                			errorLabel.setText("Please fill out all fields.");
-                		}
-                		
-                		// if all fields are filled, create new patient in database with the specified fields and take them to the patient view
-                		else
-                		{
-                			// ADD
-                			// create new patient in the database system with all those specified fields and credentials
-                			
-                			// take newly signed up patient to their view
-                			PatientView patView = new PatientView();
-                			patView.start(primaryStage);
+                // If the patient clicks sign up within the sign up screen, conduct this logic
+                signUpNested.setOnAction(new EventHandler<>() {
+                	public void handle(ActionEvent event) {
+                		if (firstNameField.getText().matches(".*\\d.*") || lastNameField.getText().matches(".*\\d.*") || birthField.getText().matches(".*[a-zA-Z].*") ||
+                				phoneField.getText().matches(".*[a-zA-Z].*")) {
+                			Database.showAlert("Invalid Syntax");
+                		} else {
+                			Database.signUp(primaryStage, firstNameField.getText(), lastNameField.getText(), birthField.getText(), 
+                    				phoneField.getText(), emailField.getText(), usernameField.getText(), passwordField.getText(), insuranceField.getText(), pharmacyField.getText());
                 		}
                 	}
-                }
-                );
+                });
         	}
         }
         );
