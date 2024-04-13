@@ -8,12 +8,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashSet;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.sql.PreparedStatement;
-
 public class Patient {
 	private String firstName;
 	private String lastName; 
@@ -29,10 +23,10 @@ public class Patient {
 	private ArrayList<Questionnaire> questionnaires;
 	private ArrayList<Immunization> immunizations;
 	private ArrayList<Vitals> vitals;
-	private ArrayList<Message> messages;
+	private ArrayList<Message> doctorMessages;
+	private ArrayList<Message> nurseMessages;
 	private ArrayList<Summary> summaries;
 	private Doctor defaultDoctor;
-	private Nurse defaultNurse;
 	
 	public Patient(String firstName, String lastName, String DOB, String phoneNumber, String email, String username, String password, String insurance, String pharmacy) {
 		this.firstName = firstName;
@@ -45,13 +39,13 @@ public class Patient {
 		this.insurance = insurance;
 		this.pharmacy = pharmacy;
 		this.defaultDoctor = Database.doctorSearch("default");
-		this.defaultNurse = Database.nurseSearch("default");
 		physicalExams = new ArrayList<Physical>();
 		prescriptions = new ArrayList<Prescription>();
 		questionnaires = new ArrayList<Questionnaire>();
 		immunizations = new ArrayList<Immunization>();
 		vitals = new ArrayList<Vitals>();
-		messages = new ArrayList<Message>();
+		doctorMessages = new ArrayList<Message>();
+		nurseMessages = new ArrayList<Message>();
 		summaries = new ArrayList<Summary>();
 	}
 		
@@ -116,13 +110,10 @@ public class Patient {
 	}
 	
 	public ArrayList<Physical> getPhysicalExams(String username) {
-		int numberOfPhysicals = Database.getNumberOfFiles(username, "physical");
-		if (numberOfPhysicals == -1) {
-			numberOfPhysicals = 0;
-		}
+		int numberOfPhysicals = Database.getNumberOfFiles(username, "Physicals");
+		System.out.println("Number of Physicals: " + numberOfPhysicals);
 		int decrementVariable = numberOfPhysicals;
-		
-		String patientFolderPath = Database.getPatientFolderPath(username);
+        String patientFolderPath = Database.getSubFolder("Physicals", "patient", username);	
 		for (int i = 0; i < numberOfPhysicals; i++) {
 			String patientInfoFileName = patientFolderPath + File.separator + username + "_" + decrementVariable + "PhysicalInformation.txt";   
 			try (Scanner scanner = new Scanner(new File(patientInfoFileName))) {
@@ -206,13 +197,11 @@ public class Patient {
 	}
 	
 	public ArrayList<Prescription> getPrescriptions(String username) {
-		int numberOfPrescriptions = Database.getNumberOfFiles(username, "pharmacy");
-		if (numberOfPrescriptions == -1) {
-			numberOfPrescriptions = 0;
-		}
+		int numberOfPrescriptions = Database.getNumberOfFiles(username, "Prescriptions");
+		System.out.println("Number of Prescriptions: " + numberOfPrescriptions);
 		int decrementVariable = numberOfPrescriptions;
 		
-		String patientFolderPath = Database.getPatientFolderPath(username);
+        String patientFolderPath = Database.getSubFolder("Prescriptions", "patient", username);	
 		for (int i = 0; i < numberOfPrescriptions; i++) {
 			String patientInfoFileName = patientFolderPath + File.separator + username + "_" + decrementVariable + "PharmacyInformation.txt";   
 			try (Scanner scanner = new Scanner(new File(patientInfoFileName))) {
@@ -267,13 +256,11 @@ public class Patient {
 	}
 	
 	public ArrayList<Questionnaire> getQuestionnaires(String username) {
-		int numberOfQuestionnaires = Database.getNumberOfFiles(username, "questionnaire");
-		if (numberOfQuestionnaires == -1) {
-			numberOfQuestionnaires = 0;
-		}
+		int numberOfQuestionnaires = Database.getNumberOfFiles(username, "Questionnaires");
+		System.out.println("Number of Questionnaires: " + numberOfQuestionnaires);
 		int decrementVariable = numberOfQuestionnaires;
 		
-		String patientFolderPath = Database.getPatientFolderPath(username);
+        String patientFolderPath = Database.getSubFolder("Questionnaires", "patient", username);	
 		for (int i = 0; i < numberOfQuestionnaires; i++) {
 			String patientInfoFileName = patientFolderPath + File.separator + username + "_" + decrementVariable + "Questionnaire.txt";   
 			try (Scanner scanner = new Scanner(new File(patientInfoFileName))) {
@@ -320,13 +307,11 @@ public class Patient {
 	}
 	
 	public ArrayList<Immunization> getImmunizations(String username) {
-		int numberOfImmunizations = Database.getNumberOfFiles(username, "immunization");
-		if (numberOfImmunizations == -1) {
-			numberOfImmunizations = 0;
-		}
+		int numberOfImmunizations = Database.getNumberOfFiles(username, "Immunizations");
+		System.out.println("Number of Immunizations: " + numberOfImmunizations);
 		int decrementVariable = numberOfImmunizations;
 		
-		String patientFolderPath = Database.getPatientFolderPath(username);
+        String patientFolderPath = Database.getSubFolder("Immunizations", "patient", username);	
 		for (int i = 0; i < numberOfImmunizations; i++) {
 			String patientInfoFileName = patientFolderPath + File.separator + username + "_" + decrementVariable + "Immunization.txt";   
 			try (Scanner scanner = new Scanner(new File(patientInfoFileName))) {
@@ -365,13 +350,11 @@ public class Patient {
 	}
 	
 	public ArrayList<Vitals> getVitals(String username) {
-		int numberOfVitals = Database.getNumberOfFiles(username, "vitals");
-		if (numberOfVitals == -1) {
-			numberOfVitals = 0;
-		}
+		int numberOfVitals = Database.getNumberOfFiles(username, "Vitals");
+		System.out.println("Number of Vitals: " + numberOfVitals);
 		int decrementVariable = numberOfVitals;
 		
-		String patientFolderPath = Database.getPatientFolderPath(username);
+		String patientFolderPath = Database.getSubFolder("Vitals", "patient", username);		
 		for (int i = 0; i < numberOfVitals; i++) {
 			String patientInfoFileName = patientFolderPath + File.separator + username + "_" + decrementVariable + "Vitals.txt";   
 			try (Scanner scanner = new Scanner(new File(patientInfoFileName))) {
@@ -422,23 +405,23 @@ public class Patient {
 		return uniqueVitalsList;
 	}
 	
-	public ArrayList<Message> getMessages(String contactType, String username, String contact) {
+	public ArrayList<Message> getMessages(String listType, String contactType, String username, String contact) {
 		String contactFolderPath = "";
 		int numberOfMessages = 0;
+		
+		System.out.println("contactType: " + contactType);
+		
 		if (contactType.equals("patientd")) {
 			contactFolderPath = Database.getContactFolderPath("patientd", username, contact);
-			numberOfMessages = Database.getNumberOfFiles("patientd", username, contact);
+			numberOfMessages = Database.getNumberOfMessages("patientd", username, contact);
 		} else if (contactType.equals("patientn")) {
 			contactFolderPath = Database.getContactFolderPath("patientn", username, contact);
-			numberOfMessages = Database.getNumberOfFiles("patientn", username, contact);
+			numberOfMessages = Database.getNumberOfMessages("patientn", username, contact);
 		}
-		if (numberOfMessages == -1) {
-			numberOfMessages = 0;
-		}
-		int decrementVariable = numberOfMessages;
 		
+		int decrementVariable = numberOfMessages;
 		for (int i = 0; i < numberOfMessages; i++) {
-			String contactFileName = contactFolderPath + File.separator + username + "_" + contact + "_" + decrementVariable + "Message.txt" ; 
+			String contactFileName = contactFolderPath + File.separator + username + "To" + contact + "_" + decrementVariable + "Message.txt" ; 
 			try (Scanner scanner = new Scanner(new File(contactFileName))) {
 				String timeString = null;
 				String recipient = null;
@@ -467,8 +450,8 @@ public class Patient {
 		            }
 		        }
 		        Message createdMessage = new Message(timeString, recipient, subj, message);
-		        if (!isDuplicateMessage(createdMessage)) {
-		        	addMessage(createdMessage);
+		        if (!isDuplicateMessage(listType, createdMessage)) {
+		        	addMessage(listType, createdMessage);
 		        }
 		        decrementVariable = decrementVariable - 1;
 			} catch (FileNotFoundException e) {
@@ -476,75 +459,24 @@ public class Patient {
 			}
 		}
 		HashSet<Message> uniqueMessages = new HashSet<>();
-		for (Message message : messages) {
-			uniqueMessages.add(message);
-		}
-		ArrayList<Message> uniqueMessagesList = new ArrayList<>(uniqueMessages);
-		return uniqueMessagesList;
-	}
-	
-	public ArrayList<Message> getMessages(String username, String contact) {
-		String contactFolderPath = Database.getContactFolderPath("patient", username, contact);
-		int numberOfMessages = Database.getNumberOfFiles("patient", username, contact);
-		if (numberOfMessages == -1) {
-			numberOfMessages = 0;
-		}
-		int decrementVariable = numberOfMessages;
-		
-		for (int i = 0; i < numberOfMessages; i++) {
-			String contactFileName = contactFolderPath + File.separator + username + "_" + contact + "_" + decrementVariable + "Message.txt" ; 
-			try (Scanner scanner = new Scanner(new File(contactFileName))) {
-				String timeString = null;
-				String recipient = null;
-				String subj = null;
-				String message = null;
-		        while (scanner.hasNextLine()) {
-		        	String line = scanner.nextLine();
-		            String[] parts = line.split(":");
-		            String key = parts[0].trim();
-		            String value = parts[1].trim();
-		            value = String.join(":", Arrays.copyOfRange(parts, 1, parts.length)).trim(); // Joining any unintentionally split parts
-		            																			 // after the first instance of :
-		            switch (key) {
-		                case "File Creation Stamp":
-		                	timeString = value;
-		                    break;
-		                case "Recipient":
-		                	recipient = value;
-		                    break;
-		                case "Subject":
-		                	subj = value;
-		                    break;
-		                case "Message Body":
-		                	message = value;
-		                    break;
-		            }
-		        }
-		        Message createdMessage = new Message(timeString, recipient, subj, message);
-		        if (!isDuplicateMessage(createdMessage)) {
-		        	addMessage(createdMessage);
-		        }
-		        decrementVariable = decrementVariable - 1;
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+		if (listType.equals("doctor")) {
+			for (Message message : doctorMessages) {
+				uniqueMessages.add(message);
 			}
-		}
-		HashSet<Message> uniqueMessages = new HashSet<>();
-		for (Message message : messages) {
-			uniqueMessages.add(message);
+		} else if (listType.equals("nurse")) {
+			for (Message message : nurseMessages) {
+				uniqueMessages.add(message);
+			}
 		}
 		ArrayList<Message> uniqueMessagesList = new ArrayList<>(uniqueMessages);
 		return uniqueMessagesList;
 	}
 	
 	public ArrayList<Summary> getSummaries(String username) {
-		int numberOfSummaries = Database.getNumberOfFiles(username, "summary");
-		if (numberOfSummaries == -1) {
-			numberOfSummaries = 0;
-		}
+		int numberOfSummaries = Database.getNumberOfFiles(username, "Summaries");
 		int decrementVariable = numberOfSummaries;
 		
-		String patientFolderPath = Database.getPatientFolderPath(username);
+		String patientFolderPath = Database.getSubFolder("Summaries", "patient", username);	
 		for (int i = 0; i < numberOfSummaries; i++) {
 			String patientInfoFileName = patientFolderPath + File.separator + username + "_" + decrementVariable + "Summary.txt";   
 			try (Scanner scanner = new Scanner(new File(patientInfoFileName))) {
@@ -656,13 +588,21 @@ public class Patient {
 	    return false; 
 	}
 	
-	private boolean isDuplicateMessage(Message message) {
-	    for (Message existingMessage : messages) {
-	        if (existingMessage.equals(message)) {
-	            return true;
-	        }
+	private boolean isDuplicateMessage(String listType, Message message) {
+	    if (listType.equals("doctor")) {
+	    	for (Message existingMessage : doctorMessages) {
+		        if (existingMessage.equals(message)) {
+		            return true;
+		        }
+		    }
+	    } else if (listType.equals("nurse")) {
+	    	for (Message existingMessage : nurseMessages) {
+		        if (existingMessage.equals(message)) {
+		            return true;
+		        }
+		    }
 	    }
-	    return false; 
+	    return false;
 	}
 	
 	private boolean isDuplicateSummary(Summary summary) {
@@ -694,8 +634,12 @@ public class Patient {
 		vitals.add(vital);
     }
 	
-	public void addMessage(Message message) {
-		messages.add(message);
+	public void addMessage(String listType, Message message) {
+		if (listType.equals("doctor")) {
+			doctorMessages.add(message);
+		} else if (listType.equals("nurse")) {
+			nurseMessages.add(message);
+		}
 	}
 	
 	public void addSummary(Summary summary) {

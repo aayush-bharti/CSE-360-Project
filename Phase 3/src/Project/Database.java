@@ -6,9 +6,11 @@ import javafx.scene.control.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -21,6 +23,9 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class Database extends Application {
 	
@@ -29,6 +34,39 @@ public class Database extends Application {
 	
 	public void start(Stage primaryStage) {
 		createPrimaryFolders();
+		System.out.println("========================================");
+		 try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/Project", "ntyagi", "tuesdayteam10");
+            Statement statement = connection.createStatement();
+            ResultSet patientResult = statement.executeQuery("SELECT * FROM PatientTable");
+            while (patientResult.next()) {
+            	String patientUsername = patientResult.getString("Username");
+            	createSubFolder("Patient Info", "patient", patientUsername);
+            	createSubFolder("Summaries", "patient", patientUsername);
+            	createSubFolder("Vitals", "patient", patientUsername);
+            	createSubFolder("Questionnaires", "patient", patientUsername);
+            	createSubFolder("Immunizations", "patient", patientUsername);
+            	createSubFolder("Prescriptions", "patient", patientUsername);
+            	createSubFolder("Physicals", "patient", patientUsername);
+            	createSubFolder("Messages", "patient", patientUsername);	
+            }
+            ResultSet nurseResult = statement.executeQuery("SELECT * FROM NurseTable");
+            while (nurseResult.next()) {
+            	String nurseUsername = nurseResult.getString("Username");
+            	createSubFolder("Messages", "nurse", nurseUsername);
+            }
+            ResultSet doctorResult = statement.executeQuery("SELECT * FROM DoctorTable");
+            while (doctorResult.next()) {
+            	String doctorUsername = doctorResult.getString("Username");
+            	createSubFolder("Messages", "doctor", doctorUsername);
+            }
+        
+            System.out.println("========================================");
+            connection.close(); 
+        } catch (Exception exception) {
+        	System.out.println("Start failed");
+        }
 		Login login = new Login();
 		login.start(primaryStage);
 	}
@@ -53,7 +91,11 @@ public class Database extends Application {
 	            updateStatus.put("Email", updateField(username, email, emailResult, statement, "Email", patient));
 	            updateStatus.put("InsuranceProvider", updateField(username, insurance, insuranceResult, statement, "InsuranceProvider", patient));
 	            updateStatus.put("PreferredPharmacy", updateField(username, pharmacy, pharmacyResult, statement, "PreferredPharmacy", patient));
-            } else {
+	            
+	            String userSubFolderPath = getSubFolder("Patient Info", "patient", username);
+	            String patientInfoFileName = userSubFolderPath + File.separator + username + "_PatientInfo.txt";
+	            updatePatientInfoFile(patientInfoFileName, phoneNumber, email, insurance, pharmacy);
+	        } else {
             	showAlert("No User");
             }
             connection.close(); 
@@ -71,6 +113,32 @@ public class Database extends Application {
 	        return oldValue;
 	    }
 	}
+	
+	private static void updatePatientInfoFile(String patientInfoFileName, String phoneNumber, String email, String insurance, String pharmacy) {
+	    try {
+
+	        List<String> lines = Files.readAllLines(Paths.get(patientInfoFileName));
+	        List<String> updatedLines = new ArrayList<>();
+	        for (String line : lines) {
+	            if (line.startsWith("Phone Number:")) {
+	                updatedLines.add("Phone Number: " + phoneNumber);
+	            } else if (line.startsWith("Email:")) {
+	                updatedLines.add("Email: " + email);
+	            } else if (line.startsWith("Insurance Provider:")) {
+	                updatedLines.add("Insurance Provider: " + insurance);
+	            } else if (line.startsWith("Preferred Pharmacy:")) {
+	                updatedLines.add("Preferred Pharmacy: " + pharmacy);
+	            } else {
+	                updatedLines.add(line);
+	            }
+	        }
+	        Files.write(Paths.get(patientInfoFileName), updatedLines, StandardCharsets.UTF_8);
+	        System.out.println("Patient information updated and saved to file: " + patientInfoFileName);
+	    } catch (IOException ex) {
+	        ex.printStackTrace();
+	    }
+	}
+
 	
 	/* ==== Search Functions === */
 	
@@ -91,11 +159,10 @@ public class Database extends Application {
                 String pharmacy = result.getString("PreferredPharmacy");
                 		
                 return new Patient(firstName, lastName, DOB, phoneNumber, email, username, password, insurance, pharmacy);
-            } else {
-            	showAlert("No User");
             }
             connection.close(); 
         } catch (Exception exception) {
+        	System.out.println("IM NOT EXISTINGGGG");
         	showAlert("No User");
         }
 		return null;
@@ -112,8 +179,7 @@ public class Database extends Application {
                 return doctorUsername;
             }
             connection.close(); 
-        } catch (Exception exception) {
-        	System.out.println("inside");
+        } catch (Exception exception) {;
         	showAlert("No Doctor Yet");
         }
 		return null;
@@ -168,8 +234,8 @@ public class Database extends Application {
                 return new Nurse(firstName, lastName, username, password);
             }
             connection.close(); 
+            return null;
         } catch (Exception exception) {
-        	System.out.println("inside1");
         	showAlert("No User");
         }
 		return null;
@@ -177,30 +243,15 @@ public class Database extends Application {
 		
 	/* === File Functions === */
 	
-	public static boolean isSameVisit(Questionnaire questionnaire, Vitals vital) {
-        LocalDateTime questionnaireDateTime = parseDateTime(questionnaire.getDateTime());
-        LocalDateTime vitalDateTime = parseDateTime(vital.getDate());
-
-        // Check if the two datetimes are within 20 minutes of each other
-        long minutesDifference = ChronoUnit.MINUTES.between(questionnaireDateTime, vitalDateTime);
-        return Math.abs(minutesDifference) <= 20;
-    }
-
-    private static LocalDateTime parseDateTime(String dateTimeStr) {
-        return LocalDateTime.parse(dateTimeStr, formatter);
-    }
-	
-	
-	
 	public static void createSummaryFile(String username, String date, String vitalWeight, String vitalHeight, String vitalTemp, String vitalBP, 
 											String physicalQuestion, String mentalQuestion, String immunizationQuestion) {
-		String patientFolderPath = getPatientFolderPath(username);
-		if (patientFolderPath != "No Folder") {	
+		String patientSubFolderPath = getSubFolder("Summaries", "patient", "patient");
+		if (!patientSubFolderPath.equals("No subfolder")) {	
 			if (!date.isEmpty() && !vitalWeight.isEmpty() && !vitalHeight.isEmpty() && !vitalTemp.isEmpty() && !vitalBP.isEmpty() &&
 				!physicalQuestion.isEmpty() && !mentalQuestion.isEmpty() && !immunizationQuestion.isEmpty()) {
 				
-				int fileNumber = getNumberOfFiles(username, "summary") + 1;
-				String patientInfoFileName = patientFolderPath + File.separator + username + "_" + fileNumber + "Summary.txt";       
+				int fileNumber = getNumberOfFiles(username, "Summaries") + 1;
+				String patientInfoFileName = patientSubFolderPath + File.separator + username + "_" + fileNumber + "Summary.txt";       
 				try (FileWriter writer = new FileWriter(patientInfoFileName)) {	
 					writer.write("Summary Date: " + date + "\n");
 					writer.write("vitalWeight: " + vitalWeight + "\n");		
@@ -228,6 +279,7 @@ public class Database extends Application {
 					statement.executeUpdate("UPDATE PatientTable SET Summary = 1 WHERE Username = '" + username + "'");
 				} catch (Exception exception) {
 					showAlert("No User");
+    
 				}
 			} else {
 				showAlert("Missing Field");
@@ -238,81 +290,101 @@ public class Database extends Application {
 		}
 	}
 	
-	public static void createMessageFile(String userType, String username, String recipient, 
+	public static String createMessageFile(String result, String userType, String username, String recipient, 
 											String date, String subject, String messageBody) {
-		String userFolderPath;
-		
-		if (userType == "doctor") {
-			userFolderPath = getDoctorFolderPath(username);
-		} else if (userType ==  "nurse") {
-			userFolderPath = getNurseFolderPath(username);
+		if (userType.equals("patient")) {
+			if (patientSearch(recipient) != null) {
+				return "Don't create";
+			} else if (nurseSearch(recipient) != null) {
+				return "Don't create";
+			} else {
+				return "Don't create";
+			}
 		} else {
-			userFolderPath = getPatientFolderPath(username);
-		}
-		
-		if (userFolderPath == "No Folder") {
-			System.out.println("New Contact. Creating Folder.");
-			userFolderPath = createMessageContactFolder(userType, recipient);
-		}
-		
-		if (userFolderPath != "No Folder") {	
-			if (!subject.isEmpty() && !messageBody.isEmpty()) {
-				int fileNumber = getNumberOfFiles(userType, username, recipient) + 1;
-				String contactFileName = getContactFolderPath(userType, username, recipient) + 
-											File.separator + username + "_" + recipient + "_" + fileNumber + "Message.txt" ;   
-				try (FileWriter writer = new FileWriter(contactFileName)) {	
-					time = LocalDateTime.now();
-					String timeString = time.format(formatter);
-					writer.write("File Creation Stamp: " + timeString + "\n");
-					writer.write("Recipient: " + recipient + "\n");
-					writer.write("Subject: " + subject + "\n");
-					writer.write("Message Body: " + messageBody + "\n");
-					System.out.println("Message for " + userType + " " + username + " has been stored.");					
-					Message message = new Message(date, recipient, subject, messageBody);
-					if (userType == "patient" ) {
-						Patient patient = patientSearch(username);
-						patient.addMessage(message);	
-					} else if (userType == "nurse") {
-						Nurse nurse = nurseSearch(username);
-						nurse.addMessage(message);
-					} else if (userType == "doctor") {
-						Doctor doctor = doctorSearch(username);
-						doctor.addMessage(message);
-					}									
-				} catch (IOException ex) {
-					ex.printStackTrace();
+			if (userType.equals("doctor") || userType.equals("nurse")) {
+				if (doctorSearch(recipient) != null || nurseSearch(recipient) != null) {
+					return "Don't create";
 				}
-				
-				try {
-					Class.forName("com.mysql.cj.jdbc.Driver");
-					Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/Project", "ntyagi", "tuesdayteam10");
-					Statement statement = connection.createStatement();
-					if (userType == "patient") {
-						statement.executeUpdate("UPDATE PatientTable SET Messages = 1 WHERE Username = '" + username + "'");	
-					} else if (userType == "nurse") {
-						statement.executeUpdate("UPDATE NurseTable SET Messages = 1 WHERE Username = '" + username + "'");
-					} else if (userType == "doctor") {
-						statement.executeUpdate("UPDATE DoctorTable SET Messages = 1 WHERE Username = '" + username + "'");
+				if (patientSearch(recipient) == null) {
+					return "Don't create";
+				}
+			}
+		}
+		
+		if (username.equals(recipient)) {
+			return "Don't create";
+		}
+		
+		String userSubFolderPath = getSubFolder("Messages", userType, username);
+		if (!userSubFolderPath.equals("No Messages Folder")) {	
+			if (!subject.isEmpty() && !messageBody.isEmpty()) {
+				int fileNumber = getNumberOfMessages(userType, username, recipient) + 1;
+				String contactFolderPath = getContactFolderPath(userType, username, recipient);
+				if (contactFolderPath.equals("No Message Contact Folder")) {
+					contactFolderPath = createMessageContactFolder(userType, username, recipient);
+				}
+				if (!contactFolderPath.equals("No Message Contact Folder") && result.equals("Can create")) {
+					String contactFileName = contactFolderPath + File.separator + username + "To" + recipient + "_" + fileNumber + "Message.txt" ;  
+					try (FileWriter writer = new FileWriter(contactFileName)) {	
+						time = LocalDateTime.now();
+						String timeString = time.format(formatter);
+						writer.write("File Creation Stamp: " + timeString + "\n");
+						writer.write("Recipient: " + recipient + "\n");
+						writer.write("Subject: " + subject + "\n");
+						writer.write("Message Body: " + messageBody + "\n");
+						System.out.println("Message for " + userType + " " + username + " has been stored.");					
+						Message message = new Message(date, recipient, subject, messageBody);
+						if (userType == "patient" ) {
+							Patient patient = patientSearch(username);
+							patient.addMessage("doctor", message);	
+						} else if (userType == "nurse") {
+							Nurse nurse = nurseSearch(username);
+							nurse.addMessage(message);
+						} else if (userType == "doctor") {
+							Doctor doctor = doctorSearch(username);
+							doctor.addMessage(message);
+						}									
+					} catch (IOException ex) {
+						ex.printStackTrace();
 					}
-					connection.close();
-				} catch (Exception exception) {
-					showAlert("No User");
+					
+					try {
+						Class.forName("com.mysql.cj.jdbc.Driver");
+						Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/Project", "ntyagi", "tuesdayteam10");
+						Statement statement = connection.createStatement();
+						if (userType == "patient") {
+							statement.executeUpdate("UPDATE PatientTable SET Messages = 1 WHERE Username = '" + username + "'");	
+						} else if (userType == "nurse") {
+							statement.executeUpdate("UPDATE NurseTable SET Messages = 1 WHERE Username = '" + username + "'");
+						} else if (userType == "doctor") {
+							statement.executeUpdate("UPDATE DoctorTable SET Messages = 1 WHERE Username = '" + username + "'");
+						}
+						connection.close();
+					} catch (Exception exception) {
+						showAlert("No User");
+	    
+					}
+					return "Created";
+				} else {
+					createMessageContactFolder(userType, username, recipient);
+					return "Can create";
 				}
 			} else {
 				showAlert("Missing Field");
 			}
 		} else {
 			showAlert("Missing Folder");
-			return;
+			return "Don't create";
 		}
+		return "Don't create";
 	}
 	
 	public static void createVitalsFile(String username, String date, String weight, String height, String temp, String bloodPressure) {
-		String patientFolderPath = getPatientFolderPath(username);
-		if (patientFolderPath != "No Folder") {	
+		String patientSubFolderPath = getSubFolder("Vitals", "patient", username);
+		if (!patientSubFolderPath.equals("No subfolder")) {	
 			if (!date.isEmpty() && !weight.isEmpty() && !height.isEmpty() && !temp.isEmpty() && !bloodPressure.isEmpty()) {
-				int fileNumber = getNumberOfFiles(username, "vitals") + 1;
-				String patientInfoFileName = patientFolderPath + File.separator + username + "_" + fileNumber + "Vitals.txt";       
+				int fileNumber = getNumberOfFiles(username, "Vitals") + 1;
+				String patientInfoFileName = patientSubFolderPath + File.separator + username + "_" + fileNumber + "Vitals.txt";       
 				try (FileWriter writer = new FileWriter(patientInfoFileName)) {	
 					writer.write("Vitals Exam Date: " + date + "\n");
 					writer.write("Patient Weight: " + weight + "\n");
@@ -345,11 +417,11 @@ public class Database extends Application {
 	}
 	
 	public static void createImmunizationFile(String username, String immunizationQuestion) {
-		String patientFolderPath = getPatientFolderPath(username);
-		if (patientFolderPath != "No Folder") {	
+		String patientSubFolderPath = getSubFolder("Immunizations", "patient", username);
+		if (!patientSubFolderPath.equals("No subfolder")) {	
 			if (!immunizationQuestion.isEmpty()) {
-				int fileNumber = getNumberOfFiles(username, "immunization") + 1;
-				String patientInfoFileName = patientFolderPath + File.separator + username + "_" + fileNumber + "Immunization.txt";       
+				int fileNumber = getNumberOfFiles(username, "Immunizations") + 1;
+				String patientInfoFileName = patientSubFolderPath + File.separator + username + "_" + fileNumber + "Immunization.txt";       
 				try (FileWriter writer = new FileWriter(patientInfoFileName)) {	
 					time = LocalDateTime.now();
 					String timeString = time.format(formatter);
@@ -370,6 +442,7 @@ public class Database extends Application {
 					statement.executeUpdate("UPDATE PatientTable SET Immunizations = 1 WHERE Username = '" + username + "'");
 				} catch (Exception exception) {
 				showAlert("No User");
+                System.out.println("Here11");
 				}
 			} else {
 				showAlert("Missing Field");
@@ -381,11 +454,11 @@ public class Database extends Application {
 	}
 	
 	public static void createQuestionnaireFile(String username, String physicalQuestion, String mentalQuestion, String immunizationQuestion) {
-		String patientFolderPath = getPatientFolderPath(username);
-		if (patientFolderPath != "No Folder") {	
+		String patientSubFolderPath = getSubFolder("Questionnaires", "patient", username);
+		if (!patientSubFolderPath.equals("No subfolder")) {	
 			if (!physicalQuestion.isEmpty() && !mentalQuestion.isEmpty() && !immunizationQuestion.isEmpty()) {
-				int fileNumber = getNumberOfFiles(username, "questionnaire") + 1;
-				String patientInfoFileName = patientFolderPath + File.separator + username + "_" + fileNumber + "Questionnaire.txt";       
+				int fileNumber = getNumberOfFiles(username, "Questionnaires") + 1;
+				String patientInfoFileName = patientSubFolderPath + File.separator + username + "_" + fileNumber + "Questionnaire.txt";       
 				try (FileWriter writer = new FileWriter(patientInfoFileName)) {	
 					time = LocalDateTime.now();
 					String timeString = time.format(formatter);
@@ -408,7 +481,8 @@ public class Database extends Application {
 					Statement statement = connection.createStatement();
 					statement.executeUpdate("UPDATE PatientTable SET Questionnaires = 1 WHERE Username = '" + username + "'");
 				} catch (Exception exception) {
-				showAlert("No User");
+					showAlert("No User");
+                    System.out.println("Here12");
 				}
 			} else {
 				showAlert("Missing Field");
@@ -422,14 +496,13 @@ public class Database extends Application {
 	
 	public static void createPharmacyFile(String username, String prescription, String phoneNumber, 
 											String email, String insurance, String pharmacy) {
-		
-		String patientFolderPath = getPatientFolderPath(username);
-		if (patientFolderPath != "No Folder") {		
+		String patientSubFolderPath = getSubFolder("Prescriptions", "patient", username);
+		if (!patientSubFolderPath.equals("No subfolder")) {		
 			if (!prescription.isEmpty() && !phoneNumber.isEmpty() && !email.isEmpty() && 
 	        		!insurance.isEmpty() && !pharmacy.isEmpty()) {
 				
-				int fileNumber = getNumberOfFiles(username, "pharmacy") ;
-				String patientInfoFileName = patientFolderPath + File.separator + username + "_" + fileNumber + "PharmacyInformation.txt";       
+				int fileNumber = getNumberOfFiles(username, "Prescriptions") + 1;
+				String patientInfoFileName = patientSubFolderPath + File.separator + username + "_" + fileNumber + "PharmacyInformation.txt";       
 				try (FileWriter writer = new FileWriter(patientInfoFileName)) {
 					time = LocalDateTime.now();
 					String timeString = time.format(formatter);
@@ -455,6 +528,7 @@ public class Database extends Application {
 		            statement.executeUpdate("UPDATE PatientTable SET PharmacyFile = 1 WHERE Username = '" + username + "'");
 				} catch (Exception exception) {
 		        	showAlert("No User");
+                    System.out.println("Here13");
 		        }
 				
 			} else {
@@ -473,14 +547,17 @@ public class Database extends Application {
 											String lungComment, String vascularComment) {
 
 		String username = patientID;
-		String patientFolderPath = getPatientFolderPath(username);
-		if (patientFolderPath != "No Folder") {	
+		String patientSubFolderPath = getSubFolder("Physicals", "patient", username);
+		if (patientSubFolderPath.equals("No subfolder")) {
+			createSubFolder("Physicals", "patient", username);
+		}
+		if (!patientSubFolderPath.equals("No subfolder")) {	
 			if (!firstName.isEmpty() && !lastName.isEmpty() && !DOB.isEmpty() && !examDate.isEmpty() && !temperature.isEmpty() &&
 					!heartRate.isEmpty() && !bloodPressure.isEmpty() && !patientID.isEmpty() && !appearanceResults.isEmpty() && 
 					!earResults.isEmpty() && !lungResults.isEmpty() && !vascularResults.isEmpty() && !appearanceComment.isEmpty() && 
 					!earComment.isEmpty() && !lungComment.isEmpty() && !vascularComment.isEmpty()) {
-				int fileNumber = getNumberOfFiles(username, "physical") + 1;
-				String patientInfoFileName = patientFolderPath + File.separator + username + "_" + fileNumber + "PhysicalInformation.txt";       
+				int fileNumber = getNumberOfFiles(username, "Physicals") + 1;
+				String patientInfoFileName = patientSubFolderPath + File.separator + username + "_" + fileNumber + "PhysicalInformation.txt";       
 				try (FileWriter writer = new FileWriter(patientInfoFileName)) {
 					writer.write("First Name: " + firstName + "\n");
 					writer.write("Last Name: " + lastName + "\n");
@@ -515,6 +592,7 @@ public class Database extends Application {
 		            statement.executeUpdate("UPDATE PatientTable SET PhysicalFile = 1 WHERE Username = '" + username + "'");
 				} catch (Exception exception) {
 		        	showAlert("No User");
+                    System.out.println("Here14");
 		        }
 			} else {
 				showAlert("Missing Field");
@@ -525,9 +603,10 @@ public class Database extends Application {
 		}
 	}
 
-	public static int getNumberOfFiles(String userType, String username, String recipient) {
+	public static int getNumberOfMessages(String userType, String username, String recipient) {
 		int messageCounter = 0;
 		String contactListPath = getContactFolderPath(userType, username, recipient);
+		System.out.println("contactListPath: " + contactListPath);
 		File directory = new File(contactListPath);
 		File[] files = directory.listFiles();
 		if (files != null) {
@@ -541,7 +620,7 @@ public class Database extends Application {
 		return 0;
 	}
 	
-	public static int getNumberOfFiles(String username, String filetype) {
+	public static int getNumberOfFiles(String username, String folderType) {
 		int physicalCounter = 0;
 		int pharmacyCounter = 0;
 		int questionnaireCounter = 0;
@@ -549,8 +628,9 @@ public class Database extends Application {
 		int vitalsCounter = 0;
 		int summaryCounter = 0;
 		
-		String patientFolderPath = getPatientFolderPath(username);
-		File directory = new File(patientFolderPath);
+		String patientSubFolderPath = getSubFolder(folderType, "patient", username); 
+		System.out.println("folderType: " + folderType + " and patientSubFolderPath: " + patientSubFolderPath);
+		File directory = new File(patientSubFolderPath);
 		File[] files = directory.listFiles();
 		if (files != null) {
 			for (File file : files) {
@@ -569,22 +649,22 @@ public class Database extends Application {
                 }
 			}
 		}
-		switch (filetype) {
-			case "physical":
+		switch (folderType) {
+			case "Physicals":
 				return physicalCounter;
-			case "pharmacy":
+			case "Prescriptions":
 				return pharmacyCounter;
-			case "questionnaire":
+			case "Questionnaires":
 				return questionnaireCounter;
-			case "immunization":
+			case "Immunizations":
 				return immunizationCounter;
-			case "vitals":
+			case "Vitals":
 				return vitalsCounter;
-			case "summary":
+			case "Summaries":
 				return summaryCounter;
 		}
-		showAlert("No User");
-		return -1;
+        System.out.println("Here15");
+		return 0;
 	}
 	
 	/* === Folder Functions === */
@@ -620,10 +700,14 @@ public class Database extends Application {
 	
 	public static String createPatientFolder(String folderName) {
 		try {
+			if (folderName.equals("patient")) {
+				folderName = "Patient-patient";
+			}
 			String currentDirectory = new File(URLDecoder.decode(Database.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).getParent();
 			File mainFolder = new File(currentDirectory, "Patient List");
 			File patientFolder = new File (mainFolder, folderName);
-			if (patientFolder.mkdir()) {
+			if (!patientFolder.exists()) {
+				patientFolder.mkdir();
 			    System.out.println("Patient file repository has been created successfully.");
 			} else {
 			    System.out.println("Patient file repository already exists.");
@@ -635,49 +719,154 @@ public class Database extends Application {
 		}
 	}
 	
-	public static String createMessageContactFolder(String userType, String contact) {
+	public static String createNurseFolder(String folderName) {
 		try {
-			String currentDirectory = new File(URLDecoder.decode(Database.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).getParent();
-			File mainFolder;
-			String folderName;
-			
-			if (userType == "patient") {
-				mainFolder = new File(currentDirectory, "Patient List");
-				folderName = "doctor- " + contact;
-				File contactFolder = new File (mainFolder, folderName);
-				if (contactFolder.mkdir()) {
-				    System.out.println("Contact repository has been created successfully.");
-				} else {
-				    System.out.println("Contact repository already exists.");
-				}
-				return contactFolder.getPath();
-			} else if (userType == "nurse") {
-				mainFolder = new File(currentDirectory, "Nurse List");
-				folderName = "patient- " + contact;
-				File contactFolder = new File (mainFolder, folderName);
-				if (contactFolder.mkdir()) {
-				    System.out.println("Contaact repository has been created successfully.");
-				} else {
-				    System.out.println("Contact repository already exists.");
-				}
-				return contactFolder.getPath();
-			} else if (userType == "doctor") {
-				mainFolder = new File(currentDirectory, "Doctor List");
-				folderName = "patient- " + contact;
-				File contactFolder = new File (mainFolder, folderName);
-				if (contactFolder.mkdir()) {
-				    System.out.println("Contaact repository has been created successfully.");
-				} else {
-				    System.out.println("Contact repository already exists.");
-				}
-				return contactFolder.getPath();
+			if (folderName.equals("nurse")) {
+				folderName = "Nurse-nurse";
 			}
-			System.out.println("Failed to create contact repository.");
-			return "";
+			String currentDirectory = new File(URLDecoder.decode(Database.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).getParent();
+			File mainFolder = new File(currentDirectory, "Nurse List");
+			File nurseFolder = new File (mainFolder, folderName);
+			if (!nurseFolder.exists()) {
+				nurseFolder.mkdir();
+			    System.out.println("Nurse file repository has been created successfully.");
+			} else {
+			    System.out.println("Nurse file repository already exists.");
+			}
+			return nurseFolder.getPath();
 		} catch (UnsupportedEncodingException e) {
 		    System.out.println("Failed to decode path: " + e.getMessage());
 		    return "";
 		}
+	}
+	
+	public static String createDoctorFolder(String folderName) {
+		try {
+			if (folderName.equals("doctor")) {
+				folderName = "Doctor-doctor";
+			}
+			String currentDirectory = new File(URLDecoder.decode(Database.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).getParent();
+			File mainFolder = new File(currentDirectory, "Doctor List");
+			File doctorFolder = new File (mainFolder, folderName);
+			if (!doctorFolder.exists()) {
+				doctorFolder.mkdir();
+			    System.out.println("Doctor file repository has been created successfully.");
+			} else {
+			    System.out.println("Doctor file repository already exists.");
+			}
+			return doctorFolder.getPath();
+		} catch (UnsupportedEncodingException e) {
+		    System.out.println("Failed to decode path: " + e.getMessage());
+		    return "";
+		}
+	}
+	
+	public static File createSubfolderHelper(String folderType, String userType, String username, String parentFolderPath) {
+		String formattedUserType = userType.substring(0, 1).toUpperCase() + userType.substring(1);
+		String formattedFolderType = folderType.substring(0, 1).toLowerCase() + folderType.substring(1);
+		File parentFolder = new File(parentFolderPath);
+		File subFolder = new File(parentFolder, folderType);
+		if (!subFolder.exists()) {
+			subFolder.mkdir();
+			System.out.println(formattedUserType + " " + username + "'s " + formattedFolderType + " repository has been created successfully.");
+		} else {
+			System.out.println(formattedUserType + " " + username + "'s " + formattedFolderType + " repository already exists.");
+		}
+		return new File(parentFolder, folderType);
+	}
+	
+	public static String createSubFolder(String folderType, String userType, String username) {
+		String userFolderPath = "";
+		if (userType.equals("patient") || userType.equals("patientd") | userType.equals("patientn")) {
+			userFolderPath = getPatientFolderPath(username);
+			if (userFolderPath.equals("No Patient Folder")) {
+				userFolderPath = createPatientFolder(username);
+			}
+		} else if (userType.equals("nurse")) {
+			userFolderPath = getNurseFolderPath(username);
+			if (userFolderPath.equals("No Nurse Folder")) {
+				userFolderPath = createNurseFolder(username);
+			}
+		} else if (userType.equals("doctor")) {
+			userFolderPath = getDoctorFolderPath(username);
+			if (userFolderPath.equals("No Doctor Folder")) {
+				userFolderPath = createDoctorFolder(username);
+			}
+		}
+		if (folderType.equals("Patient Info")) {
+			File subFolder = createSubfolderHelper("Patient Info", userType, username, userFolderPath);
+			return subFolder.getPath();
+		}
+		if (folderType.equals("Messages")) {
+			File subFolder = createSubfolderHelper("Messages", userType, username, userFolderPath);
+			return subFolder.getPath();
+		} else if (folderType.equals("Summaries")) {
+			File subFolder = createSubfolderHelper("Summaries", userType, username, userFolderPath);	
+			return subFolder.getPath();
+		} else if (folderType.equals("Vitals")) {
+			File subFolder = createSubfolderHelper("Vitals", userType, username, userFolderPath);
+			return subFolder.getPath();
+		} else if (folderType.equals("Questionnaires")) {
+			File subFolder = createSubfolderHelper("Questionnaires", userType, username, userFolderPath);
+			return subFolder.getPath();
+		} else if (folderType.equals("Immunizations")) {
+			File subFolder = createSubfolderHelper("Immunizations", userType, username, userFolderPath);
+			return subFolder.getPath();
+		} else if (folderType.equals("Prescriptions")) {
+			File subFolder = createSubfolderHelper("Prescriptions", userType, username, userFolderPath);
+			return subFolder.getPath();
+		} else if (folderType.equals("Physicals")) {
+			File subFolder = createSubfolderHelper("Physicals", userType, username, userFolderPath);
+			return subFolder.getPath();
+		}
+		return "";
+	}
+	
+	public static String createMessageContactFolder(String userType, String username, String contact) {
+		String folderName;
+		String currentDirectory = getMessagesFolderPath(userType, username);
+		System.out.println(currentDirectory);
+		System.out.println("userType: " + userType);
+		System.out.println("Username: " + username);
+		System.out.println("Contact: " + contact);
+		
+		if (username.equals(contact)) {
+			return "Should not create.";
+		}
+		
+		if (userType == "patient" || userType == "patientd" || userType == "patientn") {
+			folderName = "patientTo" + contact;
+			File contactFolder = new File (currentDirectory, folderName);
+			System.out.println(contactFolder.getPath());
+			if (!contactFolder.exists()) {
+				contactFolder.mkdir();
+				 System.out.println("Contact repository has been created successfully.");
+			} else {
+			    System.out.println("Contact repository already exists.");
+			}
+			return contactFolder.getPath();
+		} else if (userType == "nurse") {
+			folderName = "nurseTo" + contact;
+			File contactFolder = new File (currentDirectory, folderName);
+			if (!contactFolder.exists()) {
+				contactFolder.mkdir();
+				 System.out.println("Contact repository has been created successfully.");
+			} else {
+			    System.out.println("Contact repository already exists.");
+			}
+			return contactFolder.getPath();
+		} else if (userType == "doctor") {
+			folderName = "doctorTo" + contact;
+			File contactFolder = new File (currentDirectory, folderName);
+			if (!contactFolder.exists()) {
+				contactFolder.mkdir();
+				 System.out.println("Contact repository has been created successfully.");
+			} else {
+			    System.out.println("Contact repository already exists.");
+			}
+		}
+		System.out.println("Failed to create contact repository.");
+		return "";
 	}
 	
 	public static String getMainFolderPath(String folderName) {
@@ -687,7 +876,8 @@ public class Database extends Application {
 			if (!mainFolder.mkdir()) { // If the folder exists
 				return mainFolder.getPath();
 			}
-			return "No folder";
+			createPrimaryFolders();
+			return "";
 		} catch (UnsupportedEncodingException e) {
 		    System.out.println("Failed to decode path: " + e.getMessage());
 		    return "";
@@ -700,10 +890,10 @@ public class Database extends Application {
 			String currentDirectory = new File(URLDecoder.decode(Database.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).getParent();
 			File mainFolder = new File(currentDirectory, "Doctor List");
 			File doctorFolder = new File (mainFolder, folderName);
-			if (!doctorFolder.mkdir()) { // If the folder exists
+			if (doctorFolder.exists()) { // If the folder exists
 				return doctorFolder.getPath();
 			}
-			return "No folder";
+			return "No Doctor Folder";
 		} catch (UnsupportedEncodingException e) {
 		    System.out.println("Failed to decode path: " + e.getMessage());
 		    return "";
@@ -716,10 +906,10 @@ public class Database extends Application {
 			String currentDirectory = new File(URLDecoder.decode(Database.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).getParent();
 			File mainFolder = new File(currentDirectory, "Nurse List");
 			File nurseFolder = new File (mainFolder, folderName);
-			if (!nurseFolder.mkdir()) { // If the folder exists
+			if (nurseFolder.exists()) { // If the folder exists
 				return nurseFolder.getPath();
 			}
-			return "No folder";
+			return "No Nurse Folder";
 		} catch (UnsupportedEncodingException e) {
 		    System.out.println("Failed to decode path: " + e.getMessage());
 		    return "";
@@ -732,10 +922,10 @@ public class Database extends Application {
 			String currentDirectory = new File(URLDecoder.decode(Database.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).getParent();
 			File mainFolder = new File(currentDirectory, "Patient List");
 			File patientFolder = new File (mainFolder, folderName);
-			if (!patientFolder.mkdir()) { // If the folder exists ...
+			if (patientFolder.exists()) { // If the folder exists ...
 				return patientFolder.getPath();
-			}
-			return "No folder";
+			} 
+			return "No Patient Folder";
 		} catch (UnsupportedEncodingException e) {
 		    System.out.println("Failed to decode path: " + e.getMessage());
 		    return "";
@@ -743,44 +933,123 @@ public class Database extends Application {
 	}
 	
 	public static String getContactFolderPath(String userType, String username, String contact) {
-		if (userType.equals("doctor") || userType.equals("doctor")) {
-			String folderName = "patient-" + contact;
-			if (userType == "doctor") {
-				String doctorFolderPath = getDoctorFolderPath(username);
-				File subFolder = new File(doctorFolderPath, folderName);
-				if (!subFolder.mkdir()) { // If the folder exists ...
-					return subFolder.getPath();
-				}
-				return "No folder";
-			} else if (userType == "nurse") {
-				String nurseFolderPath = getNurseFolderPath(username);
-				File subFolder = new File(nurseFolderPath, folderName);
-				if (!subFolder.mkdir()) { // If the folder exists ...
-					return subFolder.getPath();
-				}
-				return "No folder";
+		String messagesFolderPath = getSubFolder("Messages", userType, username);
+		System.out.println("messagesFolderPath: " + messagesFolderPath);
+		if (!messagesFolderPath.equals("No subfolder")) {
+			String folderName = username + "To" + contact;
+			File subFolder = new File(messagesFolderPath, folderName);
+			if (subFolder.exists()) { // If the folder exists ...
+				return subFolder.getPath();
 			}
-			return "No folder";
-		} else {
-			if (userType.equals("patientd")) {
-				String folderName = "doctor-" + contact;
-				String patientFolderPath = getPatientFolderPath(username);
-				File subFolder = new File(patientFolderPath, folderName);
-				if (!subFolder.mkdir()) { // If the folder exists ...
-					return subFolder.getPath();
-				}
-				return "No folder";
-			} else if (userType.equals("patientn")) {
-				String folderName = "nurse-" + contact;
-				String patientFolderPath = getPatientFolderPath(username);
-				File subFolder = new File(patientFolderPath, folderName);
-				if (!subFolder.mkdir()) { // If the folder exists ...
-					return subFolder.getPath();
-				}
-				return "No folder";
-			}
-			return "No folder";
+			return "No Message Contact Folder";
 		}
+		return "No Message Contact Folder";
+	}
+	
+	
+	public static String getSubfolderHelper(String folderType, String userType, String username, String parentFolderPath) {
+		String formattedUserType = userType.substring(0, 1).toUpperCase() + userType.substring(1);
+		String formattedFolderType = folderType.substring(0, 1).toLowerCase() + folderType.substring(1);
+		File parentFolder = new File(parentFolderPath);
+		File subFolder = new File(parentFolder, folderType);
+		if (subFolder.exists()) {
+			return subFolder.getPath();
+		} else {
+			System.out.println("No " + formattedFolderType + " subfolder exists for " + formattedUserType + " " + username);
+			return "No subfolder";
+		}
+	}
+	
+	public static String getSubFolder(String folderType, String userType, String username) {
+		String userFolderPath = "";
+		if (userType.equals("patient") || userType.equals("patientd") || userType.equals("patientn")) {
+			userFolderPath = getPatientFolderPath(username);
+		} else if (userType.equals("nurse")) {
+			userFolderPath = getNurseFolderPath(username);
+		} else if (userType.equals("doctor")) {
+			userFolderPath = getDoctorFolderPath(username);
+		}
+		if (folderType.equals("Patient Info")) {
+			String subFolderPath = getSubfolderHelper("Patient Info", userType, username, userFolderPath);
+			if (!subFolderPath.equals("No subfolder")) {
+				File subFolder = new File(subFolderPath);
+				return subFolder.getPath();
+			}
+		}
+		if (folderType.equals("Messages")) {
+			String subFolderPath = getSubfolderHelper("Messages", userType, username, userFolderPath);
+			if (!subFolderPath.equals("No subfolder")) {
+				File subFolder = new File(subFolderPath);
+				return subFolder.getPath();
+			}
+		} else if (folderType.equals("Summaries")) {
+			String subFolderPath = getSubfolderHelper("Summaries", userType, username, userFolderPath);	
+			if (!subFolderPath.equals("No subfolder")) {
+				File subFolder = new File(subFolderPath);
+				return subFolder.getPath();
+			}
+		} else if (folderType.equals("Vitals")) {
+			String subFolderPath = getSubfolderHelper("Vitals", userType, username, userFolderPath);
+			if (!subFolderPath.equals("No subfolder")) {
+				File subFolder = new File(subFolderPath);
+				return subFolder.getPath();
+			}
+		} else if (folderType.equals("Questionnaires")) {
+			String subFolderPath = getSubfolderHelper("Questionnaires", userType, username, userFolderPath);
+			if (!subFolderPath.equals("No subfolder")) {
+				File subFolder = new File(subFolderPath);
+				return subFolder.getPath();
+			}
+		} else if (folderType.equals("Immunizations")) {
+			String subFolderPath = getSubfolderHelper("Immunizations", userType, username, userFolderPath);
+			if (!subFolderPath.equals("No subfolder")) {
+				File subFolder = new File(subFolderPath);
+				return subFolder.getPath();
+			}
+		} else if (folderType.equals("Prescriptions")) {
+			String subFolderPath = getSubfolderHelper("Prescriptions", userType, username, userFolderPath);
+			if (!subFolderPath.equals("No subfolder")) {
+				File subFolder = new File(subFolderPath);
+				return subFolder.getPath();
+			}
+		} else if (folderType.equals("Physicals")) {
+			String subFolderPath = getSubfolderHelper("Physicals", userType, username, userFolderPath);
+			if (!subFolderPath.equals("No subfolder")) {
+				File subFolder = new File(subFolderPath);
+				return subFolder.getPath();
+			}
+		}
+		return "No subfolder";
+	}
+	
+	public static String getMessagesFolderPath(String userType, String username) {		
+		if (userType.equals("doctor")) {
+			String doctorFolderPath = getDoctorFolderPath(username);
+			if (!doctorFolderPath.equals("No Doctor Folder")) {
+				File messagesFolder = new File(doctorFolderPath, "Messages");
+				if (messagesFolder.exists()) {
+					return messagesFolder.getPath();
+				}
+			}
+		} else if (userType.equals("nurse")) {
+			String nurseFolderPath = getNurseFolderPath(username);
+			if (!nurseFolderPath.equals("No Nurse Folder")) {
+				File messagesFolder = new File(nurseFolderPath, "Messages");
+				if (messagesFolder.exists()) {
+					return messagesFolder.getPath();
+				}
+			}
+		} else {
+			String patientFolderPath = getPatientFolderPath(username);
+            if (!patientFolderPath.equals("No Patient Folder")) {
+            	File messagesFolder = new File(patientFolderPath, "Messages");
+    			if (messagesFolder.exists()) {
+    				return messagesFolder.getPath();
+    			}
+ 
+            }
+		}
+		return "No Messages Folder";
 	}
 	
 	/* === Sign In and Sign Up Functions === */
@@ -798,25 +1067,22 @@ public class Database extends Application {
 							"' AND Password = '" + password + "'"); 
         			if (result.next()) {
         				Patient patient = patientSearch(username);
-        				Patient newPatient = new Patient (patient.getFirstName(), patient.getLastName(), patient.getDOB(), 
-        													patient.getPhoneNumber(), patient.getEmail(), patient.getUsername(), 
-        													patient.getPassword(), patient.getInsurance(), patient.getPharmacy());
-        				PatientView patientView = new PatientView(newPatient);
+        				PatientView patientView = new PatientView(patient);
             			patientView.start(primaryStage);
         			} else {
         				showAlert("No User");
+                        System.out.println("Here16");
         			}
         		} else if (lastPressed == "nurse") {
         			ResultSet result = statement.executeQuery("SELECT * FROM NurseTable WHERE Username = '" + username + 
 							"' AND Password = '" + password + "'"); 
         			if (result.next()) {        				
-        				Nurse nurse = nurseSearch(username);
-        				Nurse newNurse = new Nurse (nurse.getFirstName(), nurse.getLastName(), nurse.getUsername(), nurse.getPassword());        		
-                		
-        				PatientSearch searchView = new PatientSearch(newNurse);
+        				Nurse nurse = nurseSearch(username);                		
+        				PatientSearch searchView = new PatientSearch(nurse);
             			searchView.start(primaryStage);
         			} else {
         				showAlert("No User");
+                        System.out.println("Here17");
         			}
         		} else if (lastPressed == "doctor") {
         			ResultSet result = statement.executeQuery("SELECT * FROM DoctorTable WHERE Username = '" + username + 
@@ -828,6 +1094,7 @@ public class Database extends Application {
             			searchView.start(primaryStage);
         			} else {
         				showAlert("No User");
+                        System.out.println("Here18");
         			}
         		}
             } else {
@@ -836,6 +1103,7 @@ public class Database extends Application {
             connection.close(); 
         } catch (Exception exception) {
         	showAlert("No User");
+            System.out.println("Here19");
         	exception.printStackTrace();
         }
 	}
@@ -850,48 +1118,62 @@ public class Database extends Application {
         	if (!firstName.isEmpty() && !lastName.isEmpty() && !DOB.isEmpty() && 
             		!phoneNumber.isEmpty() && !email.isEmpty() && !username.isEmpty() &&
             		!password.isEmpty() && !insurance.isEmpty() && !pharmacy.isEmpty()) {
-        		
-            	try {
-            		PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO PatientTable " +
-            				"(FirstName, LastName, DOB, PhoneNumber, Email, Username, Password, InsuranceProvider, " + 
-            				"PreferredPharmacy, PatientInfoFile, PharmacyFile, PhysicalFile) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            		preparedStatement.setString(1, firstName);
-            		preparedStatement.setString(2, lastName);
-            		preparedStatement.setString(3, DOB);
-            		preparedStatement.setString(4, phoneNumber);
-            		preparedStatement.setString(5, email);
-            		preparedStatement.setString(6, username);
-            		preparedStatement.setString(7, password);
-            		preparedStatement.setString(8, insurance);
-            		preparedStatement.setString(9, pharmacy);
-            		preparedStatement.setString(10, "1");
-            		preparedStatement.setString(11, "0");
-            		preparedStatement.setString(12, "0");
-            		preparedStatement.executeUpdate();
-					
-					String patientFolder = "Patient-" + username;
-					String patientFolderPath = createPatientFolder(patientFolder);
-					String patientInfoFileName = patientFolderPath + File.separator + username + "_PatientInfo.txt";       
-					try (FileWriter writer = new FileWriter(patientInfoFileName)) {
-						writer.write("First Name: " + firstName + "\n");
-						writer.write("Last Name: " + lastName + "\n");
-						writer.write("Date of Birth: " + DOB + "\n");
-						writer.write("Phone Number: " + phoneNumber + "\n");
-						writer.write("Email: " + email + "\n");
-						writer.write("Username: " + username + "\n");
-						writer.write("Password: " + password + "\n");
-						writer.write("Insurance Provider: " + insurance + "\n");
-						writer.write("Preferred Pharmacy: " + pharmacy + "\n");
-						System.out.println("Patient information saved to file: " + patientInfoFileName);
-					} catch (IOException ex) {
-					    ex.printStackTrace();
-					}
-					Patient patient = new Patient(firstName, lastName, DOB, phoneNumber, email, username, password, insurance, pharmacy);
-					PatientView patientView = new PatientView(patient);
-					patientView.start(primaryStage);
-				} catch (Exception e) {
-			        e.printStackTrace();
-				}
+        		try {
+        		    PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO PatientTable (" +
+        		            "FirstName, LastName, DOB, PhoneNumber, Email, Username, Password, InsuranceProvider, " + 
+        		            "PreferredPharmacy, PatientInfoFile, PharmacyFile, PhysicalFile, Questionnaires, Immunizations, Vitals, " + 
+        		            "Messages, Summary, AssociateDoctor, AssociateNurse) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        		    preparedStatement.setString(1, firstName);
+        		    preparedStatement.setString(2, lastName);
+        		    preparedStatement.setString(3, DOB);
+        		    preparedStatement.setString(4, phoneNumber);
+        		    preparedStatement.setString(5, email);
+        		    preparedStatement.setString(6, username);
+        		    preparedStatement.setString(7, password);
+        		    preparedStatement.setString(8, insurance);
+        		    preparedStatement.setString(9, pharmacy);
+        		    preparedStatement.setString(10, "1");
+        		    preparedStatement.setString(11, "0");
+        		    preparedStatement.setString(12, "0");
+        		    preparedStatement.setString(13, "0");
+        		    preparedStatement.setString(14, "0");
+        		    preparedStatement.setString(15, "0");
+        		    preparedStatement.setString(16, "0");
+        		    preparedStatement.setString(17, "0");
+        		    preparedStatement.setString(18, "ABC");
+        		    preparedStatement.setString(19, "ABC");
+        		    int successful = preparedStatement.executeUpdate();
+        		    if (successful > 0) {
+            		    String patientSubFolderPath = createSubFolder("Patient Info", "patient", "Patient-" + username);
+                    	createSubFolder("Summaries", "patient", username);
+                    	createSubFolder("Vitals", "patient", username);
+                    	createSubFolder("Questionnaires", "patient", username);
+                    	createSubFolder("Immunizations", "patient", username);
+                    	createSubFolder("Prescriptions", "patient", username);
+                    	createSubFolder("Physicals", "patient", username);
+                    	createSubFolder("Messages", "patient", username);
+            		    String patientInfoFileName = patientSubFolderPath + File.separator + username + "_PatientInfo.txt";       
+            		    try (FileWriter writer = new FileWriter(patientInfoFileName)) {
+            		        writer.write("First Name: " + firstName + "\n");
+            		        writer.write("Last Name: " + lastName + "\n");
+            		        writer.write("Date of Birth: " + DOB + "\n");
+            		        writer.write("Phone Number: " + phoneNumber + "\n");
+            		        writer.write("Email: " + email + "\n");
+            		        writer.write("Username: " + username + "\n");
+            		        writer.write("Password: " + password + "\n");
+            		        writer.write("Insurance Provider: " + insurance + "\n");
+            		        writer.write("Preferred Pharmacy: " + pharmacy + "\n");
+            		        System.out.println("Patient information saved to file: " + patientInfoFileName);
+            		    } catch (IOException ex) {
+            		        ex.printStackTrace();
+            		    }
+            		    Patient patient = new Patient(firstName, lastName, DOB, phoneNumber, email, username, password, insurance, pharmacy);
+            		    PatientView patientView = new PatientView(patient);
+            		    patientView.start(primaryStage);
+        		    }
+        		} catch (Exception e) {
+        		    showAlert("Already Exists");
+        		}
 			} else {
 				showAlert("Missing Field");
             }
@@ -939,6 +1221,8 @@ public class Database extends Application {
 			case "Left Blank":
 				alert.setContentText("Enter a username.");
 		        break;
+			case "One Per Session":
+				alert.setContentText("Only one form submission is allowed per patient visit.");
 		}
 		alert.showAndWait(); 	
 	}

@@ -293,9 +293,18 @@ public class Login extends Application {
                 		if (firstNameField.getText().matches(".*\\d.*") || lastNameField.getText().matches(".*\\d.*") || birthField.getText().matches(".*[a-zA-Z].*") ||
                 				phoneField.getText().matches(".*[a-zA-Z].*")) {
                 			Database.showAlert("Invalid Syntax");
-                		} else {
+                		} else {                			
                 			Database.signUp(primaryStage, firstNameField.getText(), lastNameField.getText(), birthField.getText(), 
                     				phoneField.getText(), emailField.getText(), usernameField.getText(), passwordField.getText(), insuranceField.getText(), pharmacyField.getText());
+                			
+                			String username = usernameField.getText();
+                			Database.createSubFolder("Patient Info", "patient", username);
+                			Database.createSubFolder("Summaries", "patient", username);
+                			Database.createSubFolder("Vitals", "patient", username);
+                			Database.createSubFolder("Questionnaire", "patient", username);
+                			Database.createSubFolder("Immunizations", "patient", username);
+                			Database.createSubFolder("Prescriptions", "patient", username);
+                			Database.createSubFolder("Physicals", "patient", username);
                 		}
                 	}
                 });

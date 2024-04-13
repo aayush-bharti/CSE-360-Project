@@ -28,8 +28,8 @@ public class NurseView extends Application {
 	static LocalDateTime time;
 	static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss");
 	
-	boolean createdVitals;
-	boolean createdQuestionnaire;
+	boolean createdVitals = false;
+	boolean createdQuestionnaire = false;
 	Vitals vitalsObj = null;
 	Questionnaire questionnaireObj = null;
 	
@@ -76,10 +76,9 @@ public class NurseView extends Application {
 		back.setPrefWidth(175);
 		// event handler for the back button
 		back.setOnAction(new EventHandler<>() {
-	        	public void handle(ActionEvent event)
-	        	{
-	        		Login log = new Login();
-	        		log.start(primaryStage);
+	        	public void handle(ActionEvent event) {
+	        		PatientSearch search = new PatientSearch(nurse);
+	        		search.start(primaryStage);
 	        	}
         	}
         	);
@@ -134,18 +133,22 @@ public class NurseView extends Application {
 				// checks if all the fields needed are filled and if so it will save answers
 				save.setOnAction(new EventHandler<>() {
 			        	public void handle(ActionEvent event) {
-			        		Database.createQuestionnaireFile(patient.getUsername(), q1Field.getText(), 
-			        											q2Field.getText(), q3Field.getText());
-			        		questionnaireObj = new Questionnaire(patient.getUsername(), q1Field.getText(), 
-			        												q2Field.getText(), q3Field.getText());
-			        		
+			        		if (!createdQuestionnaire) {
+			        			Database.createQuestionnaireFile(patient.getUsername(), q1Field.getText(), 
+										q2Field.getText(), q3Field.getText());
+								questionnaireObj = new Questionnaire(patient.getUsername(), q1Field.getText(), 
+																		q2Field.getText(), q3Field.getText());
+								createdQuestionnaire = true;
+			        		} else {
+			        			Database.showAlert("One Per Session");
+			        		}
 			        		if (vitalsObj != null && questionnaireObj != null) {
-			        			Database.createSummaryFile(patient.getUsername(), questionnaireObj.getDateTime(), vitalsObj.getWeight(), 
-			        										vitalsObj.getHeight(), vitalsObj.getTemperature(), vitalsObj.getBloodPressure(),
-			        										questionnaireObj.getPhysicalQuestion(), questionnaireObj.getMentalQuestion(),
-			        										questionnaireObj.getImmunizationQuestion());
-			        			vitalsObj = null;
-			        			questionnaireObj = null;
+		        				Database.createSummaryFile(patient.getUsername(), vitalsObj.getDate(), vitalsObj.getWeight(), 
+										vitalsObj.getHeight(), vitalsObj.getTemperature(), vitalsObj.getBloodPressure(),
+										questionnaireObj.getPhysicalQuestion(), questionnaireObj.getMentalQuestion(),
+										questionnaireObj.getImmunizationQuestion());
+								vitalsObj = null;
+								questionnaireObj = null;
 			        		}
 			        	}
 			        });
@@ -272,18 +275,23 @@ public class NurseView extends Application {
 				// checks if all the fields are inputed and saves the information
 				save.setOnAction(new EventHandler<>() {
 		        	public void handle(ActionEvent event) {
-		        		Database.createVitalsFile(patient.getUsername(), dateField.getText(), weightField.getText(), 
-		        									heightField.getText(), tempField.getText(), bpField.getText());
-		        		
-		        		vitalsObj = new Vitals(dateField.getText(), weightField.getText(), heightField.getText(), 
-		        								tempField.getText(), bpField.getText());
+		        		if (!createdVitals) {
+		        			Database.createVitalsFile(patient.getUsername(), dateField.getText(), weightField.getText(), 
+									heightField.getText(), tempField.getText(), bpField.getText());
+		
+							vitalsObj = new Vitals(dateField.getText(), weightField.getText(), heightField.getText(), 
+													tempField.getText(), bpField.getText());
+							createdVitals = true;
+		        		} else {
+		        			Database.showAlert("One Per Session");
+		        		}
 		        		if (vitalsObj != null && questionnaireObj != null) {
-		        			Database.createSummaryFile(patient.getUsername(), vitalsObj.getDate(), vitalsObj.getWeight(), 
-		        										vitalsObj.getHeight(), vitalsObj.getTemperature(), vitalsObj.getBloodPressure(),
-		        										questionnaireObj.getPhysicalQuestion(), questionnaireObj.getMentalQuestion(),
-		        										questionnaireObj.getImmunizationQuestion());
-		        			vitalsObj = null;
-		        			questionnaireObj = null;
+	        				Database.createSummaryFile(patient.getUsername(), vitalsObj.getDate(), vitalsObj.getWeight(), 
+									vitalsObj.getHeight(), vitalsObj.getTemperature(), vitalsObj.getBloodPressure(),
+									questionnaireObj.getPhysicalQuestion(), questionnaireObj.getMentalQuestion(),
+									questionnaireObj.getImmunizationQuestion());
+							vitalsObj = null;
+							questionnaireObj = null;
 		        		}
 		        	}
 	       	 	});
@@ -398,8 +406,8 @@ public class NurseView extends Application {
 				tempCol.setPrefWidth(70);
 				heartRateCol.setPrefWidth(70);
 				bpCol.setPrefWidth(150);
-				genResultCol.setPrefWidth(120);
-				entResultCol.setPrefWidth(130);
+				genResultCol.setPrefWidth(100);
+				entResultCol.setPrefWidth(100);
 				lungResultCol.setPrefWidth(100);
 				vascularResultCol.setPrefWidth(100);
 				physicalTable.setTranslateX(-30);
@@ -504,11 +512,11 @@ public class NurseView extends Application {
 				prescriptionTable.getColumns().addAll(prescDateCol, prescriptionCol, phoneNumberCol, emailCol, insuranceCol, pharmacyCol);
 				prescriptionTable.setMaxWidth(800);
 				prescDateCol.setPrefWidth(100);
-				prescriptionCol.setPrefWidth(150);
+				prescriptionCol.setPrefWidth(100);
 				phoneNumberCol.setPrefWidth(100);
-				emailCol.setPrefWidth(150);
-				insuranceCol.setPrefWidth(150);
-				pharmacyCol.setPrefWidth(150);
+				emailCol.setPrefWidth(100);
+				insuranceCol.setPrefWidth(100);
+				pharmacyCol.setPrefWidth(100);
 				prescriptionTable.setTranslateX(-30);
 				
 				prescriptionTable.getItems().clear();
@@ -552,7 +560,7 @@ public class NurseView extends Application {
 				immunizationTable.getColumns().addAll(immunizationDateCol, immunizationColumn);
 				immunizationTable.setMaxWidth(800);
 				immunizationDateCol.setPrefWidth(200);
-				immunizationColumn.setPrefWidth(600);
+				immunizationColumn.setPrefWidth(550);
 				immunizationTable.setTranslateX(-30);
 				
 				immunizationTable.getItems().clear();
@@ -657,8 +665,13 @@ public class NurseView extends Application {
 		        	public void handle(ActionEvent event) {
 		        		time = LocalDateTime.now();
 						String timeString = time.format(formatter);
-		        		Database.createMessageFile("nurse", nurse.getUsername(), patient.getUsername(), 
-		        									timeString, subjField.getText(), message.getText());
+		        		
+		        		String result = Database.createMessageFile("Can't create", "nurse", nurse.getUsername(), patient.getUsername(), 
+								timeString, subjField.getText(), message.getText());
+						if (!result.equals("Don't create") || !result.equals("Created")) {
+							Database.createMessageFile(result, "nurse", nurse.getUsername(), patient.getUsername(), 
+									timeString, subjField.getText(), message.getText());
+						}
 		        	}
 		        });
 				// adds the buttons to the hbox
@@ -683,9 +696,9 @@ public class NurseView extends Application {
 				
 				messageTable.setMaxWidth(800);
 				dateColumn.setPrefWidth(70);
-				subjectColumn.setPrefWidth(180);
+				subjectColumn.setPrefWidth(100);
 				messageColumn.setPrefWidth(400);
-				messageTable.setTranslateY(150);
+				messageTable.setTranslateY(70);
 				
 				messageTable.getItems().clear();
 				messageTable.refresh();
@@ -729,7 +742,8 @@ public class NurseView extends Application {
 		});
 		
 		// adds the label in the left vbox
-		Label nurseName = new Label("Nurse " + nurse.getFullName());
+		Label nurseName = new Label("Nurse " + nurse.getLastName());
+		nurseName.setAlignment(Pos.CENTER);
 		nurseName.setPrefWidth(175);
 		nurseName.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         // adds everything to the left vbox and sets the background color

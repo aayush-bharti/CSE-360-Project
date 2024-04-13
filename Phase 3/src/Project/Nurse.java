@@ -45,14 +45,11 @@ public class Nurse {
 	
 	public ArrayList<Message> getMessages(String username, String contact) {
 		String contactFolderPath = Database.getContactFolderPath("nurse", username, contact);
-		int numberOfMessages = Database.getNumberOfFiles("nurse", username, contact);
-		if (numberOfMessages == -1) {
-			numberOfMessages = 0;
-		}
+		int numberOfMessages = Database.getNumberOfMessages("nurse", username, contact);
 		int decrementVariable = numberOfMessages;
 		
 		for (int i = 0; i < numberOfMessages; i++) {
-			String contactFileName = contactFolderPath + File.separator + username + "_" + contact + "_" + decrementVariable + "Message.txt" ; 
+			String contactFileName = contactFolderPath + File.separator + username + "To" + contact + "_" + decrementVariable + "Message.txt" ; 
 			try (Scanner scanner = new Scanner(new File(contactFileName))) {
 				String timeString = null;
 				String recipient = null;

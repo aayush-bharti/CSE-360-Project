@@ -23,8 +23,10 @@ public class DoctorView extends Application {
 	private Doctor doctor;
 	private Patient patient;
 	
-	static LocalDateTime time;
-	static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss");
+	private boolean createdPhysical = false;
+	
+	private static LocalDateTime time;
+	private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss");
 	
 	public DoctorView(Doctor doctor) {
 		this.doctor = doctor;
@@ -147,9 +149,8 @@ public class DoctorView extends Application {
 				// checks if all the fields needed are filled and if so it will send the prescription
 				send.setOnAction(new EventHandler<>() {
 		        	public void handle(ActionEvent event) {
-		        		Database.createPharmacyFile(patient.getUsername(), prescripField.getText(), numField.getText(), 
-													emailField.getText(), insurField.getText(), pharmacyField.getText());
-		        		
+	        			Database.createPharmacyFile(patient.getUsername(), prescripField.getText(), numField.getText(), 
+								emailField.getText(), insurField.getText(), pharmacyField.getText());
 		        	}
 		        });
 				
@@ -241,6 +242,8 @@ public class DoctorView extends Application {
 				id.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 				id.setTranslateX(-5);
 				TextField idField = new TextField();
+				idField.setText(patient.getUsername());
+				idField.setEditable(false);
 				idField.setTranslateY(-10);
 				
 				// adds the labels and their respective fields to the hboxes
@@ -484,11 +487,17 @@ public class DoctorView extends Application {
 				// checks if all the fields are inputed and saves the information
 				save.setOnAction(new EventHandler<>() {
 		        	public void handle(ActionEvent event) {
-		        		Database.createPhysicalFile(firstField.getText(), lastField.getText(), dobField.getText(), 
-		        				examField.getText(), tempField.getText(), heartField.getText(), bpField.getText(), 
-		        				idField.getText(), genAppearanceResults[0], earResults[0], lungResults[0], 
-								vascularResults[0], comment1.getText(), comment2.getText(), comment3.getText(), 
-								comment4.getText());
+		        		if (!createdPhysical) {
+		        			Database.createPhysicalFile(firstField.getText(), lastField.getText(), dobField.getText(), 
+			        				examField.getText(), tempField.getText(), heartField.getText(), bpField.getText(), 
+			        				idField.getText(), genAppearanceResults[0], earResults[0], lungResults[0], 
+									vascularResults[0], comment1.getText(), comment2.getText(), comment3.getText(), 
+									comment4.getText());
+		        			createdPhysical = true;
+		        		} else {
+		        			Database.showAlert("One Per Session");
+		        		}
+		        		
 		        	}
 		        });
 				
@@ -519,8 +528,13 @@ public class DoctorView extends Application {
 				// colors the history button so it shows that it is clicked
 				historyTab.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a;");
 				
-				// ADD VALUES TO TABLE
 				// creates a table and all of its columns
+				
+				Label physicalHistory = new Label("Physical History");
+				physicalHistory.setPrefWidth(175);
+				physicalHistory.setStyle("-fx-text-fill: #00005a;");
+				physicalHistory.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+
 				TableView<Physical> physicalTable = new TableView<Physical>();
 				TableColumn<Physical, String> dateCol = new TableColumn<Physical, String>("Date");
 				TableColumn<Physical, Integer> tempCol = new TableColumn<Physical, Integer>("Body Temperature(F)");
@@ -543,13 +557,13 @@ public class DoctorView extends Application {
 				// adds every column to the table and sets their widths
 				physicalTable.getColumns().addAll(dateCol, tempCol, heartRateCol, bpCol, genResultCol, entResultCol, lungResultCol, vascularResultCol);
 				physicalTable.setMaxWidth(800);
-				dateCol.setPrefWidth(60);
-				tempCol.setPrefWidth(70);
-				heartRateCol.setPrefWidth(70);
-				bpCol.setPrefWidth(150);
-				genResultCol.setPrefWidth(120);
-				entResultCol.setPrefWidth(130);
-				lungResultCol.setPrefWidth(100);
+				dateCol.setPrefWidth(70);
+				tempCol.setPrefWidth(104);
+				heartRateCol.setPrefWidth(105);
+				bpCol.setPrefWidth(105);
+				genResultCol.setPrefWidth(104);
+				entResultCol.setPrefWidth(104);
+				lungResultCol.setPrefWidth(104);
 				vascularResultCol.setPrefWidth(100);
 				physicalTable.setTranslateX(-30);
 				
@@ -589,6 +603,11 @@ public class DoctorView extends Application {
 					}
 				}
 				
+				Label questionnaireHistory = new Label("Questionnaire History");
+				questionnaireHistory.setPrefWidth(175);
+				questionnaireHistory.setStyle("-fx-text-fill: #00005a;");
+				questionnaireHistory.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+				
 				TableView<Questionnaire> questionnaireTable = new TableView<Questionnaire>();
 				TableColumn<Questionnaire, String> dateColumn = new TableColumn<Questionnaire, String>("Date");
 				TableColumn<Questionnaire, String> physicalCol = new TableColumn<Questionnaire, String>("Physical Question Response");
@@ -603,10 +622,10 @@ public class DoctorView extends Application {
 				// adds every column to the table and sets their widths
 				questionnaireTable.getColumns().addAll(dateColumn, physicalCol, mentalCol, immunizationCol);
 				questionnaireTable.setMaxWidth(800);
-				dateColumn.setPrefWidth(150);
-				physicalCol.setPrefWidth(150);
-				mentalCol.setPrefWidth(150);
-				immunizationCol.setPrefWidth(150);
+				dateColumn.setPrefWidth(200);
+				physicalCol.setPrefWidth(200);
+				mentalCol.setPrefWidth(200);
+				immunizationCol.setPrefWidth(200);
 				questionnaireTable.setTranslateX(-30);
 				
 				questionnaireTable.getItems().clear();
@@ -633,7 +652,12 @@ public class DoctorView extends Application {
 						questionnaireTable.getItems().add(new Questionnaire(questionnaireTime, physicalQuestion, mentalQuestion, immunizationQuestion));
 					}
 				}
-
+				
+				Label prescriptionHistory = new Label("Prescription History");
+				prescriptionHistory.setPrefWidth(175);
+				prescriptionHistory.setStyle("-fx-text-fill: #00005a;");
+				prescriptionHistory.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+				
 				TableView<Prescription> prescriptionTable = new TableView<Prescription>();
 				TableColumn<Prescription, String> prescDateCol = new TableColumn<Prescription, String>("Date");
 				TableColumn<Prescription, String> prescriptionCol = new TableColumn<Prescription, String>("Prescriptions");	
@@ -652,12 +676,12 @@ public class DoctorView extends Application {
 				// adds every column to the table and sets their widths
 				prescriptionTable.getColumns().addAll(prescDateCol, prescriptionCol, phoneNumberCol, emailCol, insuranceCol, pharmacyCol);
 				prescriptionTable.setMaxWidth(800);
-				prescDateCol.setPrefWidth(100);
-				prescriptionCol.setPrefWidth(150);
-				phoneNumberCol.setPrefWidth(100);
-				emailCol.setPrefWidth(150);
-				insuranceCol.setPrefWidth(150);
-				pharmacyCol.setPrefWidth(150);
+				prescDateCol.setPrefWidth(134);
+				prescriptionCol.setPrefWidth(134);
+				phoneNumberCol.setPrefWidth(133);
+				emailCol.setPrefWidth(133);
+				insuranceCol.setPrefWidth(133);
+				pharmacyCol.setPrefWidth(133);
 				prescriptionTable.setTranslateX(-30);
 				
 				prescriptionTable.getItems().clear();
@@ -690,6 +714,11 @@ public class DoctorView extends Application {
 					}
 				}
 
+				Label immunizationHistory = new Label("Immunization History");
+				immunizationHistory.setPrefWidth(175);
+				immunizationHistory.setStyle("-fx-text-fill: #00005a;");
+				immunizationHistory.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+				
 				TableView<Immunization> immunizationTable = new TableView<Immunization>();
 				TableColumn<Immunization, String> immunizationDateCol = new TableColumn<Immunization, String>("Date");
 				TableColumn<Immunization, String> immunizationColumn = new TableColumn<Immunization, String>("Immunizations");						
@@ -723,7 +752,8 @@ public class DoctorView extends Application {
 				}
 				
 				// adds everything to the right vbox and displays it
-				right.getChildren().addAll(physicalTable, questionnaireTable, prescriptionTable, immunizationTable);	
+				right.getChildren().addAll(physicalHistory, physicalTable, questionnaireHistory, questionnaireTable, 
+											prescriptionHistory, prescriptionTable, immunizationHistory, immunizationTable);	
 				right.setSpacing(20);
 				
 				VBox temp = new VBox();
@@ -806,8 +836,13 @@ public class DoctorView extends Application {
 		        	public void handle(ActionEvent event) {
 		        		time = LocalDateTime.now();
 						String timeString = time.format(formatter);
-		        		Database.createMessageFile("doctor", doctor.getUsername(), patient.getUsername(), 
-		        									timeString, subjField.getText(), message.getText());
+						
+						String result = Database.createMessageFile("Can't create", "doctor", doctor.getUsername(), patient.getUsername(), 
+								timeString, subjField.getText(), message.getText());
+						if (!result.equals("Don't create") || !result.equals("Created")) {
+							Database.createMessageFile(result, "doctor", doctor.getUsername(), patient.getUsername(), 
+									timeString, subjField.getText(), message.getText());
+						}
 		        	}
 		        });
 				// adds the buttons to the hbox
@@ -817,12 +852,12 @@ public class DoctorView extends Application {
 				buttons.setTranslateY(30);
 				
 				// creates a table to view past messages with subject and date as columns
+				
 				TableView<Message> messageTable = new TableView<Message>();
 				TableColumn<Message, String> dateColumn = new TableColumn<Message, String>("Date");
 				TableColumn<Message, String> subjectColumn = new TableColumn<Message, String>("Subject");
 				TableColumn<Message, String> messageColumn = new TableColumn<Message, String>("Message Body");
 
-				
 				dateColumn.setCellValueFactory(new PropertyValueFactory<Message, String>("dateTime"));
 				subjectColumn.setCellValueFactory(new PropertyValueFactory<Message, String>("subject"));
 				messageColumn.setCellValueFactory(new PropertyValueFactory<Message, String>("messageBody"));
@@ -832,9 +867,9 @@ public class DoctorView extends Application {
 				
 				messageTable.setMaxWidth(800);
 				dateColumn.setPrefWidth(70);
-				subjectColumn.setPrefWidth(180);
+				subjectColumn.setPrefWidth(100);
 				messageColumn.setPrefWidth(400);
-				messageTable.setTranslateY(150);
+				messageTable.setTranslateY(70);
 				
 				messageTable.getItems().clear();
 				messageTable.refresh();
@@ -878,7 +913,8 @@ public class DoctorView extends Application {
 		});
 		
 		// adds the label in the left vbox
-		Label docName = new Label("Dr. " + doctor.getFullName());
+		Label docName = new Label("Dr. " + doctor.getLastName());
+		docName.setAlignment(Pos.CENTER);
 		docName.setPrefWidth(175);
 		docName.setStyle("-fx-text-fill: #00005a;");
 		docName.setFont(Font.font("Arial", FontWeight.BOLD, 18));

@@ -1,5 +1,3 @@
-
-
 CREATE TABLE PatientTable (	
 	FirstName VARCHAR(50) NOT NULL,
     LastName VARCHAR(50) NOT NULL,
@@ -41,18 +39,11 @@ CREATE TABLE DoctorTable (
     PRIMARY KEY (Username)
 );
 
-INSERT INTO PatientTable (FirstName, LastName, DOB, PhoneNumber, 
-Email, Username, Password, InsuranceProvider, PreferredPharmacy, 
-PatientInfoFile, PharmacyFile, PhysicalFile, Questionnaires, 
-Immunizations, Vitals, Messages, Summary, AssociateDoctor, AssociateNurse) VALUES (
-'Neo', 'Tyagi', '03/12/2004', '408-780-8769', 'neo@gmail.com', 'ntyagi', 'root', 'BlueCross',
-'CVS', '0', '0', '0', '0', '0', '0', '0', '0', 'ABC', 'ABC');
-
 INSERT INTO NurseTable (FirstName, LastName, Username, Password, Messages) VALUES (
-'Aayush', 'Bharti', 'abhart', 'root', '0');
+'Aayush', 'Bharti', 'nurse', 'nurse', '0');
 
 INSERT INTO DoctorTable (FirstName, LastName, Username, Password, Messages) VALUES (
-'Zuhayr', 'Shams', 'zhu', 'root', '0');
+'Zuhayr', 'Shams', 'doctor', 'doctor', '0');
 
 SELECT * FROM PatientTable;
 SELECT * FROM NurseTable;

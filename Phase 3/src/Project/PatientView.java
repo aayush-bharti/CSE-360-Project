@@ -29,8 +29,8 @@ public class PatientView extends Application {
 	
 	public PatientView(Patient patient) {
 		this.patient = patient;
-		this.assignedDoctor = Database.associateDoctorSearch(this.patient.getUsername());
-		this.assignedNurse = Database.associateNurseSearch(this.patient.getUsername());
+		this.assignedDoctor = Database.associateDoctorSearch(patient.getUsername());
+		this.assignedNurse = Database.associateNurseSearch(patient.getUsername());
 	}
 	
 	public void start(Stage primaryStage) {
@@ -39,13 +39,13 @@ public class PatientView extends Application {
 		System.out.println("Assigned Doctor: " + assignedDoctor);
 		System.out.println("Assigned Nurse: " + assignedNurse);
 		
-		if (!"ABC".equals(assignedDoctor)) {
+		if (!assignedDoctor.equals("ABC")) {
 			assignedD = Database.doctorSearch(assignedDoctor);
 		} else {
 			assignedD = null;
 		}
-		if (!"ABC".equals(assignedDoctor)) {
-			assignedN = Database.nurseSearch(assignedDoctor);
+		if (!assignedNurse.equals("ABC")) {
+			assignedN = Database.nurseSearch(assignedNurse);
 		} else {
 			assignedN = null;
 		}
@@ -149,7 +149,7 @@ public class PatientView extends Application {
                 String[] values = {patient.getFirstName(), patient.getLastName(), patient.getDOB(), patient.getPhoneNumber(), patient.getEmail(), patient.getInsurance(), patient.getPharmacy(), "Unassigned"}; // initial values from phase 1 design
                 
                 if (assignedD != null) {
-                	values[7] = "Dr. " + assignedD.getFullName();
+                	values[7] = "Dr. " + assignedD.getLastName();
                 }
                 
                 // so when updating the values of personal information from the database --> access value like values[0] for first name set to whatever you read in, etc. for rest
@@ -411,16 +411,28 @@ public class PatientView extends Application {
 						String timeString = time.format(formatter);
 						
 						if (!sendToWho[0].isEmpty()) {
-							if (sendToWho[0].equals("Doctor") && !assignedDoctor.isEmpty()) {
-								Database.createMessageFile("patientd", patient.getUsername(), assignedD.getUsername(), 
+							if (sendToWho[0].equals("Doctor") && !assignedDoctor.equals("ABC")) {
+								String result = Database.createMessageFile("Can't create", "patientd", patient.getUsername(), assignedD.getUsername(), 
 										timeString, subjField.getText(), message.getText());
-								return;
-							} else if (sendToWho[0].equals("Nurse") && !assignedNurse.isEmpty()) {
-								Database.createMessageFile("patientn", patient.getUsername(), assignedN.getUsername(), 
+								if (!result.equals("Don't create") || !result.equals("Created")) {
+									Database.createMessageFile(result, "patientd", patient.getUsername(), assignedD.getUsername(), 
+											timeString, subjField.getText(), message.getText());
+								}
+							} else if (sendToWho[0].equals("Nurse") && !assignedNurse.equals("ABC")) {
+								String result = Database.createMessageFile("Can't create", "patientn", patient.getUsername(), assignedN.getUsername(), 
 										timeString, subjField.getText(), message.getText());
-								return;
+								if (!result.equals("Don't create") || !result.equals("Created")) {
+									Database.createMessageFile(result, "patientn", patient.getUsername(), assignedN.getUsername(), 
+											timeString, subjField.getText(), message.getText());
+								}
 							} else {
-								Database.showAlert("None Assigned");
+								if (assignedDoctor.equals("ABC") && assignedNurse.equals("ABC")) {
+									Database.showAlert("None Assigned");
+								} else if (assignedDoctor.equals("ABC") && !assignedNurse.equals("ABC")) {
+									Database.showAlert("No Doctor Yet");
+								} else if (!assignedDoctor.equals("ABC") && assignedNurse.equals("ABC")) {
+									Database.showAlert("No Nurse Yet");
+								}
 							}
 						}
 		        	}
@@ -445,14 +457,18 @@ public class PatientView extends Application {
 				
 				messageTable.setMaxWidth(800);
 				dateColumn.setPrefWidth(70);
-				subjectColumn.setPrefWidth(180);
+				subjectColumn.setPrefWidth(100);
 				messageColumn.setPrefWidth(400);
-				messageTable.setTranslateY(150);
+				messageTable.setTranslateY(70);
 				
 				messageTable.getItems().clear();
 				messageTable.refresh();
 				
-				ArrayList<Message> messages = patient.getMessages("patientd", patient.getUsername(), patient.getUsername());
+				ArrayList<Message> messages = new ArrayList<Message>();
+				if (assignedD != null) {
+					messages = patient.getMessages("doctor", "patientd", patient.getUsername(), assignedD.getUsername());
+				}
+				System.out.println("Messages.size(): " + messages.size());
 				if (messages != null) {
 					for (Message localMessage : messages) {
 						String messageTime = localMessage.getDateTime();
@@ -488,14 +504,19 @@ public class PatientView extends Application {
 				
 				messageTable1.setMaxWidth(800);
 				dateColumn1.setPrefWidth(70);
-				subjectColumn1.setPrefWidth(180);
+				subjectColumn1.setPrefWidth(100);
 				messageColumn1.setPrefWidth(400);
-				messageTable1.setTranslateY(150);
+				messageTable1.setTranslateY(70);
 				
 				messageTable1.getItems().clear();
 				messageTable1.refresh();
 				
-				ArrayList<Message> messages1 = patient.getMessages("patientn", patient.getUsername(), patient.getUsername());
+				ArrayList<Message> messages1 = new ArrayList<Message>();
+				if (assignedN != null) {
+					messages1 = patient.getMessages("nurse", "patientn", patient.getUsername(), assignedN.getUsername());
+				}
+				System.out.println("Messages1.size(): " + messages1.size());
+				
 				if (messages1 != null) {
 					for (Message localMessage : messages1) {
 						String messageTime = localMessage.getDateTime();
