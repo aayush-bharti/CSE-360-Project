@@ -13,6 +13,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
@@ -25,7 +26,7 @@ import javafx.stage.Stage;
 
 public class Login extends Application {
 
-    String lastPressed = "";
+    private String lastPressed = "";
 
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Clinic");
@@ -48,7 +49,7 @@ public class Login extends Application {
         username.setMaxWidth(200);
 
         // creating the password field
-        TextField password = new TextField();
+        PasswordField password = new PasswordField();
         password.setPromptText("Password");
         password.setMaxWidth(200);
 
@@ -249,7 +250,7 @@ public class Login extends Application {
                 usernameField.setTranslateY(-80);
                 
                 // textfield for the password field that sets up the style, size, grid position and makes it editable
-                TextField passwordField = new TextField();
+                PasswordField passwordField = new PasswordField();
                 passwordField.setPromptText("Password");
                 //passwordField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;");
                 passwordField.setEditable(true);
@@ -290,21 +291,31 @@ public class Login extends Application {
                 // If the patient clicks sign up within the sign up screen, conduct this logic
                 signUpNested.setOnAction(new EventHandler<>() {
                 	public void handle(ActionEvent event) {
-                		if (firstNameField.getText().matches(".*\\d.*") || lastNameField.getText().matches(".*\\d.*") || birthField.getText().matches(".*[a-zA-Z].*") ||
-                				phoneField.getText().matches(".*[a-zA-Z].*")) {
-                			Database.showAlert("Invalid Syntax");
-                		} else {                			
-                			Database.signUp(primaryStage, firstNameField.getText(), lastNameField.getText(), birthField.getText(), 
-                    				phoneField.getText(), emailField.getText(), usernameField.getText(), passwordField.getText(), insuranceField.getText(), pharmacyField.getText());
+                		
+                		if (!firstNameField.getText().isEmpty() && !lastNameField.getText().isEmpty() && !birthField.getText().isEmpty() &&  
+                				!phoneField.getText().isEmpty() && !emailField.getText().isEmpty() && !usernameField.getText().isEmpty() &&  
+                				!passwordField.getText().isEmpty() && !insuranceField.getText().isEmpty() && !pharmacyField.getText().isEmpty()) {
                 			
-                			String username = usernameField.getText();
-                			Database.createSubFolder("Patient Info", "patient", username);
-                			Database.createSubFolder("Summaries", "patient", username);
-                			Database.createSubFolder("Vitals", "patient", username);
-                			Database.createSubFolder("Questionnaire", "patient", username);
-                			Database.createSubFolder("Immunizations", "patient", username);
-                			Database.createSubFolder("Prescriptions", "patient", username);
-                			Database.createSubFolder("Physicals", "patient", username);
+                			if (Database.validateInput("Date", birthField.getText()) && Database.validateInput("Phone Number", phoneField.getText()) 
+                					&& Database.validateInput("Email", emailField.getText())) {
+                			
+	                			Database.signUp(primaryStage, firstNameField.getText(), lastNameField.getText(), birthField.getText(), 
+	                    				phoneField.getText(), emailField.getText(), usernameField.getText(), passwordField.getText(), insuranceField.getText(), pharmacyField.getText());
+	                			
+	                			String username = usernameField.getText();
+	                			Database.createSubFolder("Patient Info", "patient", username);
+	                			Database.createSubFolder("Summaries", "patient", username);
+	                			Database.createSubFolder("Vitals", "patient", username);
+	                			Database.createSubFolder("Questionnaire", "patient", username);
+	                			Database.createSubFolder("Immunizations", "patient", username);
+	                			Database.createSubFolder("Prescriptions", "patient", username);
+	                			Database.createSubFolder("Physicals", "patient", username);
+	                		} else {
+	                			Database.showAlert("Invalid Syntax");
+	                		}
+                		} else {
+                			System.out.println("here101");
+                			Database.showAlert("Missing Field");
                 		}
                 	}
                 });

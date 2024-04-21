@@ -27,10 +27,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import javafx.util.Pair;
+
 public class Database extends Application {
 	
-	static LocalDateTime time;
-	static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss");
+	private static LocalDateTime time;
+	private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss");
 	
 	public void start(Stage primaryStage) {
 		createPrimaryFolders();
@@ -42,7 +44,7 @@ public class Database extends Application {
             ResultSet patientResult = statement.executeQuery("SELECT * FROM PatientTable");
             while (patientResult.next()) {
             	String patientUsername = patientResult.getString("Username");
-            	createSubFolder("Patient Info", "patient", patientUsername);
+            	createSubFolder("Patient Info", "patient", "Patient-" + patientUsername);
             	createSubFolder("Summaries", "patient", patientUsername);
             	createSubFolder("Vitals", "patient", patientUsername);
             	createSubFolder("Questionnaires", "patient", patientUsername);
@@ -50,18 +52,22 @@ public class Database extends Application {
             	createSubFolder("Prescriptions", "patient", patientUsername);
             	createSubFolder("Physicals", "patient", patientUsername);
             	createSubFolder("Messages", "patient", patientUsername);	
+            	System.out.println("---------------------------------------");
             }
+            System.out.println("========================================");
             ResultSet nurseResult = statement.executeQuery("SELECT * FROM NurseTable");
             while (nurseResult.next()) {
             	String nurseUsername = nurseResult.getString("Username");
             	createSubFolder("Messages", "nurse", nurseUsername);
+            	System.out.println("---------------------------------------");
             }
+            System.out.println("========================================");
             ResultSet doctorResult = statement.executeQuery("SELECT * FROM DoctorTable");
             while (doctorResult.next()) {
             	String doctorUsername = doctorResult.getString("Username");
             	createSubFolder("Messages", "doctor", doctorUsername);
+            	System.out.println("---------------------------------------");
             }
-        
             System.out.println("========================================");
             connection.close(); 
         } catch (Exception exception) {
@@ -133,13 +139,11 @@ public class Database extends Application {
 	            }
 	        }
 	        Files.write(Paths.get(patientInfoFileName), updatedLines, StandardCharsets.UTF_8);
-	        System.out.println("Patient information updated and saved to file: " + patientInfoFileName);
 	    } catch (IOException ex) {
 	        ex.printStackTrace();
 	    }
 	}
 
-	
 	/* ==== Search Functions === */
 	
 	public static Patient patientSearch(String username) {
@@ -162,7 +166,6 @@ public class Database extends Application {
             }
             connection.close(); 
         } catch (Exception exception) {
-        	System.out.println("IM NOT EXISTINGGGG");
         	showAlert("No User");
         }
 		return null;
@@ -291,13 +294,17 @@ public class Database extends Application {
 	}
 	
 	public static String createMessageFile(String result, String userType, String username, String recipient, 
-											String date, String subject, String messageBody) {
-		if (userType.equals("patient")) {
+											String date, String subject, String messageBody) { 
+		if (userType.equals("patientd")) {
 			if (patientSearch(recipient) != null) {
 				return "Don't create";
-			} else if (nurseSearch(recipient) != null) {
+			} else if (doctorSearch(recipient) == null) {
 				return "Don't create";
-			} else {
+			}
+		} else if (userType.equals("patientn")) {
+			if (patientSearch(recipient) != null) {
+				return "Don't create";
+			} else if (nurseSearch(recipient) == null) {
 				return "Don't create";
 			}
 		} else {
@@ -315,14 +322,22 @@ public class Database extends Application {
 			return "Don't create";
 		}
 		
-		String userSubFolderPath = getSubFolder("Messages", userType, username);
-		if (!userSubFolderPath.equals("No Messages Folder")) {	
+		String recipientType = getContactType(userType);
+		String senderMessagesFolderPath = getSubFolder("Messages", userType, username);
+		String recipientSubFolderPath = getSubFolder("Messages", recipientType, recipient);
+		
+		File sentDirectory = new File(senderMessagesFolderPath, "Sent");
+		File receivedDirectory = new File (recipientSubFolderPath, "Received");	
+		if (sentDirectory.exists() && receivedDirectory.exists()) {	
 			if (!subject.isEmpty() && !messageBody.isEmpty()) {
-				int fileNumber = getNumberOfMessages(userType, username, recipient) + 1;
-				String contactFolderPath = getContactFolderPath(userType, username, recipient);
+				int fileNumber = getNumberOfMessages(userType, username, recipient, "sent") + 1;
+				String contactFolderPath = getContactFolderPath(userType, username, recipient, "sent");	
+				String recipientFolderPath = getContactFolderPath(recipientType, recipient, username, "received");	
+				
 				if (contactFolderPath.equals("No Message Contact Folder")) {
-					contactFolderPath = createMessageContactFolder(userType, username, recipient);
-				}
+					contactFolderPath = createMessageContactFolder(userType, username, recipient).getKey();
+					recipientFolderPath = createMessageContactFolder(userType, username, recipient).getValue();
+				}				
 				if (!contactFolderPath.equals("No Message Contact Folder") && result.equals("Can create")) {
 					String contactFileName = contactFolderPath + File.separator + username + "To" + recipient + "_" + fileNumber + "Message.txt" ;  
 					try (FileWriter writer = new FileWriter(contactFileName)) {	
@@ -334,15 +349,39 @@ public class Database extends Application {
 						writer.write("Message Body: " + messageBody + "\n");
 						System.out.println("Message for " + userType + " " + username + " has been stored.");					
 						Message message = new Message(date, recipient, subject, messageBody);
-						if (userType == "patient" ) {
+						if (userType.equals("patientd") || userType.equals("patientn")) {
 							Patient patient = patientSearch(username);
-							patient.addMessage("doctor", message);	
+							patient.addMessage(userType, message);	
 						} else if (userType == "nurse") {
 							Nurse nurse = nurseSearch(username);
 							nurse.addMessage(message);
 						} else if (userType == "doctor") {
 							Doctor doctor = doctorSearch(username);
 							doctor.addMessage(message);
+						}									
+					} catch (IOException ex) {
+						ex.printStackTrace();
+					}
+					
+					String recipientFileName = recipientFolderPath + File.separator + username + "To" + recipient + "_" + fileNumber + "Message.txt" ;  
+					try (FileWriter writer = new FileWriter(recipientFileName)) {	
+						time = LocalDateTime.now();
+						String timeString = time.format(formatter);
+						writer.write("File Creation Stamp: " + timeString + "\n");
+						writer.write("Recipient: " + recipient + "\n");
+						writer.write("Subject: " + subject + "\n");
+						writer.write("Message Body: " + messageBody + "\n");
+						System.out.println("Message for " + recipientType + " " + recipient + " has been stored.");					
+						Message message = new Message(date, recipient, subject, messageBody);
+						if (recipientType == "patient") {
+							Patient patient = patientSearch(recipient);
+							patient.addReceivedMessage(userType, message);	
+						} else if (recipientType == "nurse") {
+							Nurse nurse = nurseSearch(recipient);
+							nurse.addReceivedMessage(message);
+						} else if (recipientType == "doctor") {
+							Doctor doctor = doctorSearch(recipient);
+							doctor.addReceivedMessage(message);
 						}									
 					} catch (IOException ex) {
 						ex.printStackTrace();
@@ -442,7 +481,6 @@ public class Database extends Application {
 					statement.executeUpdate("UPDATE PatientTable SET Immunizations = 1 WHERE Username = '" + username + "'");
 				} catch (Exception exception) {
 				showAlert("No User");
-                System.out.println("Here11");
 				}
 			} else {
 				showAlert("Missing Field");
@@ -482,7 +520,6 @@ public class Database extends Application {
 					statement.executeUpdate("UPDATE PatientTable SET Questionnaires = 1 WHERE Username = '" + username + "'");
 				} catch (Exception exception) {
 					showAlert("No User");
-                    System.out.println("Here12");
 				}
 			} else {
 				showAlert("Missing Field");
@@ -528,7 +565,6 @@ public class Database extends Application {
 		            statement.executeUpdate("UPDATE PatientTable SET PharmacyFile = 1 WHERE Username = '" + username + "'");
 				} catch (Exception exception) {
 		        	showAlert("No User");
-                    System.out.println("Here13");
 		        }
 				
 			} else {
@@ -592,7 +628,6 @@ public class Database extends Application {
 		            statement.executeUpdate("UPDATE PatientTable SET PhysicalFile = 1 WHERE Username = '" + username + "'");
 				} catch (Exception exception) {
 		        	showAlert("No User");
-                    System.out.println("Here14");
 		        }
 			} else {
 				showAlert("Missing Field");
@@ -603,10 +638,9 @@ public class Database extends Application {
 		}
 	}
 
-	public static int getNumberOfMessages(String userType, String username, String recipient) {
+	public static int getNumberOfMessages(String userType, String username, String recipient, String sentOrReceived) {
 		int messageCounter = 0;
-		String contactListPath = getContactFolderPath(userType, username, recipient);
-		System.out.println("contactListPath: " + contactListPath);
+		String contactListPath = getContactFolderPath(userType, username, recipient, sentOrReceived);
 		File directory = new File(contactListPath);
 		File[] files = directory.listFiles();
 		if (files != null) {
@@ -629,7 +663,6 @@ public class Database extends Application {
 		int summaryCounter = 0;
 		
 		String patientSubFolderPath = getSubFolder(folderType, "patient", username); 
-		System.out.println("folderType: " + folderType + " and patientSubFolderPath: " + patientSubFolderPath);
 		File directory = new File(patientSubFolderPath);
 		File[] files = directory.listFiles();
 		if (files != null) {
@@ -663,7 +696,6 @@ public class Database extends Application {
 			case "Summaries":
 				return summaryCounter;
 		}
-        System.out.println("Here15");
 		return 0;
 	}
 	
@@ -768,6 +800,12 @@ public class Database extends Application {
 		File subFolder = new File(parentFolder, folderType);
 		if (!subFolder.exists()) {
 			subFolder.mkdir();
+			if (folderType.equals("Messages")) {
+				File sentFolder = new File (subFolder, "Sent");
+				File receivedFolder = new File(subFolder, "Received");
+				sentFolder.mkdir();
+				receivedFolder.mkdir();
+			}
 			System.out.println(formattedUserType + " " + username + "'s " + formattedFolderType + " repository has been created successfully.");
 		} else {
 			System.out.println(formattedUserType + " " + username + "'s " + formattedFolderType + " repository already exists.");
@@ -822,51 +860,61 @@ public class Database extends Application {
 		return "";
 	}
 	
-	public static String createMessageContactFolder(String userType, String username, String contact) {
+	public static Pair<String, String> createMessageContactFolder(String userType, String username, String contact) {
 		String folderName;
 		String currentDirectory = getMessagesFolderPath(userType, username);
-		System.out.println(currentDirectory);
-		System.out.println("userType: " + userType);
-		System.out.println("Username: " + username);
-		System.out.println("Contact: " + contact);
+		
+		String contactType = getContactType(userType);
+		String contactDirectory = getMessagesFolderPath(contactType, contact);
+		
+		
+		File sentDirectory = new File (currentDirectory, "Sent");
+		File receivedDirectory = new File (contactDirectory, "Received");	
 		
 		if (username.equals(contact)) {
-			return "Should not create.";
+			return new Pair<>("Should not create.", "Should not create.");
 		}
 		
 		if (userType == "patient" || userType == "patientd" || userType == "patientn") {
-			folderName = "patientTo" + contact;
-			File contactFolder = new File (currentDirectory, folderName);
-			System.out.println(contactFolder.getPath());
+			folderName = username + "To" + contact;
+			File contactFolder = new File (sentDirectory, folderName);
+			File receivedContactFolder = new File (receivedDirectory, folderName);
 			if (!contactFolder.exists()) {
 				contactFolder.mkdir();
-				 System.out.println("Contact repository has been created successfully.");
+				receivedContactFolder.mkdir();
+				System.out.println("Contact repository has been created successfully.");
 			} else {
 			    System.out.println("Contact repository already exists.");
 			}
-			return contactFolder.getPath();
+			return new Pair<>(contactFolder.getPath(), receivedContactFolder.getPath());
 		} else if (userType == "nurse") {
-			folderName = "nurseTo" + contact;
-			File contactFolder = new File (currentDirectory, folderName);
+			folderName = username + "To" + contact;
+			File contactFolder = new File (sentDirectory, folderName);
+			File receivedContactFolder = new File (receivedDirectory, folderName);
+			
 			if (!contactFolder.exists()) {
 				contactFolder.mkdir();
-				 System.out.println("Contact repository has been created successfully.");
+				receivedContactFolder.mkdir();
+				System.out.println("Contact repository has been created successfully.");
 			} else {
 			    System.out.println("Contact repository already exists.");
 			}
-			return contactFolder.getPath();
+			return new Pair<>(contactFolder.getPath(), receivedContactFolder.getPath());
 		} else if (userType == "doctor") {
-			folderName = "doctorTo" + contact;
-			File contactFolder = new File (currentDirectory, folderName);
+			folderName = username + "To" + contact;
+			File contactFolder = new File (sentDirectory, folderName);
+			File receivedContactFolder = new File (receivedDirectory, folderName);
+			
 			if (!contactFolder.exists()) {
 				contactFolder.mkdir();
-				 System.out.println("Contact repository has been created successfully.");
+				receivedContactFolder.mkdir();
+				System.out.println("Contact repository has been created successfully.");
 			} else {
 			    System.out.println("Contact repository already exists.");
 			}
 		}
 		System.out.println("Failed to create contact repository.");
-		return "";
+		return new Pair<>("", "");
 	}
 	
 	public static String getMainFolderPath(String folderName) {
@@ -932,14 +980,20 @@ public class Database extends Application {
 		}
 	}
 	
-	public static String getContactFolderPath(String userType, String username, String contact) {
+	public static String getContactFolderPath(String userType, String username, String contact, String sentOrReceived) {
 		String messagesFolderPath = getSubFolder("Messages", userType, username);
-		System.out.println("messagesFolderPath: " + messagesFolderPath);
 		if (!messagesFolderPath.equals("No subfolder")) {
+			File subFolder;
 			String folderName = username + "To" + contact;
-			File subFolder = new File(messagesFolderPath, folderName);
-			if (subFolder.exists()) { // If the folder exists ...
-				return subFolder.getPath();
+			if (sentOrReceived.equals("received")) {
+				folderName = contact + "To" + username;
+				subFolder = new File (messagesFolderPath, "Received");
+			} else {
+				subFolder = new File (messagesFolderPath, "Sent");
+			}
+			File contactFolder = new File (subFolder, folderName);
+			if (contactFolder.exists()) { // If the folder exists ...
+				return contactFolder.getPath();
 			}
 			return "No Message Contact Folder";
 		}
@@ -1071,7 +1125,6 @@ public class Database extends Application {
             			patientView.start(primaryStage);
         			} else {
         				showAlert("No User");
-                        System.out.println("Here16");
         			}
         		} else if (lastPressed == "nurse") {
         			ResultSet result = statement.executeQuery("SELECT * FROM NurseTable WHERE Username = '" + username + 
@@ -1082,7 +1135,6 @@ public class Database extends Application {
             			searchView.start(primaryStage);
         			} else {
         				showAlert("No User");
-                        System.out.println("Here17");
         			}
         		} else if (lastPressed == "doctor") {
         			ResultSet result = statement.executeQuery("SELECT * FROM DoctorTable WHERE Username = '" + username + 
@@ -1094,7 +1146,6 @@ public class Database extends Application {
             			searchView.start(primaryStage);
         			} else {
         				showAlert("No User");
-                        System.out.println("Here18");
         			}
         		}
             } else {
@@ -1103,7 +1154,6 @@ public class Database extends Application {
             connection.close(); 
         } catch (Exception exception) {
         	showAlert("No User");
-            System.out.println("Here19");
         	exception.printStackTrace();
         }
 	}
@@ -1118,61 +1168,66 @@ public class Database extends Application {
         	if (!firstName.isEmpty() && !lastName.isEmpty() && !DOB.isEmpty() && 
             		!phoneNumber.isEmpty() && !email.isEmpty() && !username.isEmpty() &&
             		!password.isEmpty() && !insurance.isEmpty() && !pharmacy.isEmpty()) {
-        		try {
-        		    PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO PatientTable (" +
-        		            "FirstName, LastName, DOB, PhoneNumber, Email, Username, Password, InsuranceProvider, " + 
-        		            "PreferredPharmacy, PatientInfoFile, PharmacyFile, PhysicalFile, Questionnaires, Immunizations, Vitals, " + 
-        		            "Messages, Summary, AssociateDoctor, AssociateNurse) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        		    preparedStatement.setString(1, firstName);
-        		    preparedStatement.setString(2, lastName);
-        		    preparedStatement.setString(3, DOB);
-        		    preparedStatement.setString(4, phoneNumber);
-        		    preparedStatement.setString(5, email);
-        		    preparedStatement.setString(6, username);
-        		    preparedStatement.setString(7, password);
-        		    preparedStatement.setString(8, insurance);
-        		    preparedStatement.setString(9, pharmacy);
-        		    preparedStatement.setString(10, "1");
-        		    preparedStatement.setString(11, "0");
-        		    preparedStatement.setString(12, "0");
-        		    preparedStatement.setString(13, "0");
-        		    preparedStatement.setString(14, "0");
-        		    preparedStatement.setString(15, "0");
-        		    preparedStatement.setString(16, "0");
-        		    preparedStatement.setString(17, "0");
-        		    preparedStatement.setString(18, "ABC");
-        		    preparedStatement.setString(19, "ABC");
-        		    int successful = preparedStatement.executeUpdate();
-        		    if (successful > 0) {
-            		    String patientSubFolderPath = createSubFolder("Patient Info", "patient", "Patient-" + username);
-                    	createSubFolder("Summaries", "patient", username);
-                    	createSubFolder("Vitals", "patient", username);
-                    	createSubFolder("Questionnaires", "patient", username);
-                    	createSubFolder("Immunizations", "patient", username);
-                    	createSubFolder("Prescriptions", "patient", username);
-                    	createSubFolder("Physicals", "patient", username);
-                    	createSubFolder("Messages", "patient", username);
-            		    String patientInfoFileName = patientSubFolderPath + File.separator + username + "_PatientInfo.txt";       
-            		    try (FileWriter writer = new FileWriter(patientInfoFileName)) {
-            		        writer.write("First Name: " + firstName + "\n");
-            		        writer.write("Last Name: " + lastName + "\n");
-            		        writer.write("Date of Birth: " + DOB + "\n");
-            		        writer.write("Phone Number: " + phoneNumber + "\n");
-            		        writer.write("Email: " + email + "\n");
-            		        writer.write("Username: " + username + "\n");
-            		        writer.write("Password: " + password + "\n");
-            		        writer.write("Insurance Provider: " + insurance + "\n");
-            		        writer.write("Preferred Pharmacy: " + pharmacy + "\n");
-            		        System.out.println("Patient information saved to file: " + patientInfoFileName);
-            		    } catch (IOException ex) {
-            		        ex.printStackTrace();
+      
+        		if (validateInput("Date", DOB) && validateInput("Phone Number", phoneNumber) && validateInput("Email", email)) {
+        			try {
+            		    PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO PatientTable (" +
+            		            "FirstName, LastName, DOB, PhoneNumber, Email, Username, Password, InsuranceProvider, " + 
+            		            "PreferredPharmacy, PatientInfoFile, PharmacyFile, PhysicalFile, Questionnaires, Immunizations, Vitals, " + 
+            		            "Messages, Summary, AssociateDoctor, AssociateNurse) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            		    preparedStatement.setString(1, firstName);
+            		    preparedStatement.setString(2, lastName);
+            		    preparedStatement.setString(3, DOB);
+            		    preparedStatement.setString(4, phoneNumber);
+            		    preparedStatement.setString(5, email);
+            		    preparedStatement.setString(6, username);
+            		    preparedStatement.setString(7, password);
+            		    preparedStatement.setString(8, insurance);
+            		    preparedStatement.setString(9, pharmacy);
+            		    preparedStatement.setString(10, "1");
+            		    preparedStatement.setString(11, "0");
+            		    preparedStatement.setString(12, "0");
+            		    preparedStatement.setString(13, "0");
+            		    preparedStatement.setString(14, "0");
+            		    preparedStatement.setString(15, "0");
+            		    preparedStatement.setString(16, "0");
+            		    preparedStatement.setString(17, "0");
+            		    preparedStatement.setString(18, "ABC");
+            		    preparedStatement.setString(19, "ABC");
+            		    int successful = preparedStatement.executeUpdate();
+            		    if (successful > 0) {
+                		    String patientSubFolderPath = createSubFolder("Patient Info", "patient", "Patient-" + username);
+                        	createSubFolder("Summaries", "patient", username);
+                        	createSubFolder("Vitals", "patient", username);
+                        	createSubFolder("Questionnaires", "patient", username);
+                        	createSubFolder("Immunizations", "patient", username);
+                        	createSubFolder("Prescriptions", "patient", username);
+                        	createSubFolder("Physicals", "patient", username);
+                        	createSubFolder("Messages", "patient", username);
+                		    String patientInfoFileName = patientSubFolderPath + File.separator + username + "_PatientInfo.txt";       
+                		    try (FileWriter writer = new FileWriter(patientInfoFileName)) {
+                		        writer.write("First Name: " + firstName + "\n");
+                		        writer.write("Last Name: " + lastName + "\n");
+                		        writer.write("Date of Birth: " + DOB + "\n");
+                		        writer.write("Phone Number: " + phoneNumber + "\n");
+                		        writer.write("Email: " + email + "\n");
+                		        writer.write("Username: " + username + "\n");
+                		        writer.write("Password: " + password + "\n");
+                		        writer.write("Insurance Provider: " + insurance + "\n");
+                		        writer.write("Preferred Pharmacy: " + pharmacy + "\n");
+                		        System.out.println("Patient information saved to file: " + patientInfoFileName);
+                		    } catch (IOException ex) {
+                		        ex.printStackTrace();
+                		    }
+                		    Patient patient = new Patient(firstName, lastName, DOB, phoneNumber, email, username, password, insurance, pharmacy);
+                		    PatientView patientView = new PatientView(patient);
+                		    patientView.start(primaryStage);
             		    }
-            		    Patient patient = new Patient(firstName, lastName, DOB, phoneNumber, email, username, password, insurance, pharmacy);
-            		    PatientView patientView = new PatientView(patient);
-            		    patientView.start(primaryStage);
-        		    }
-        		} catch (Exception e) {
-        		    showAlert("Already Exists");
+            		} catch (Exception e) {
+            		    showAlert("Already Exists");
+            		}
+        		} else {
+        			showAlert("Invalid Syntax");
         		}
 			} else {
 				showAlert("Missing Field");
@@ -1183,7 +1238,32 @@ public class Database extends Application {
 	    }
 	}
 	
+	/* === Function to Validate Input === */
+	
+	public static boolean validateInput(String inputType, String input) {
+		switch(inputType) {
+			case "Date":
+				return input.matches("^(0[1-9]|1[0-2])/(0[1-9]|[12][0-9]|3[01])/\\d{4}$"); // MM/DD/YYYY
+			case "Phone Number":
+				return input.matches("^\\d{3}-\\d{3}-\\d{4}$"); // XXX-XXX-XXXX
+			case "Email":
+				return input.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]+$"); // __@__.__
+			case "Weight":
+				return input.matches("^\\d+(\\.\\d{1,2})?$"); // Allows integer or Decimal to two digits
+			case "Height":
+				return input.matches("^\\d+(\\.\\d{1,2})?$");  // Allows integer or decimal to two digits
+			case "Temperature":
+				return input.matches("^\\d+(\\.\\d{1,2})?$");  // Allows integer or Decimal to two digits
+			case "Blood Pressure":
+				return input.matches("^\\d+$"); // Integer
+			case "Heart Rate":
+				return input.matches("^\\d+$"); // Integer
+		}
+		return false;
+	}
+	
 	/* === Function to Display Errors === */
+	
 	public static void showAlert(String alertType) {
 		Alert alert = new Alert(Alert.AlertType.ERROR);
 		alert.setTitle("Error");
@@ -1226,4 +1306,17 @@ public class Database extends Application {
 		}
 		alert.showAndWait(); 	
 	}
+	
+	/* === Function to Get Contact Type === */
+	
+	public static String getContactType(String sendType) {
+		if (sendType.equals("doctor") || sendType.equals("nurse")) {
+			return "patient";
+		} else if (sendType.equals("patientn")) {
+			return "nurse";
+		} else {
+			return "doctor"; 
+		}
+	}
+	
 }

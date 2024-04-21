@@ -62,7 +62,7 @@ public class PatientSearch extends Application {
         HBox buttons = new HBox(); 
         
         // logout button which goes back to the login page
-        Button logout = new Button("Logout");
+        Button logout = new Button("LOGOUT");
         logout.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a");
         logout.setPrefWidth(175);
         logout.setFont(Font.font("Arial", FontWeight.BOLD, 14));
@@ -74,7 +74,7 @@ public class PatientSearch extends Application {
         });
 
         // confirm button which takes the doctor to the doctor view if the patient exists
-        Button confirm = new Button("Confirm Patient");
+        Button confirm = new Button("CONFIRM PATIENT");
         confirm.setStyle("-fx-text-fill: #ffffff; -fx-background-color: #00005a");
         confirm.setPrefWidth(175);
         confirm.setFont(Font.font("Arial", FontWeight.BOLD, 14));
@@ -109,7 +109,6 @@ public class PatientSearch extends Application {
                 										"' WHERE Username = '" + username + "'");	
                 				connection.close();
                 			} catch (Exception exception) {
-                				System.out.println("Inside #");
                 				Database.showAlert("No User");
                 			}
             				NurseView nurseView = new NurseView(nurse, patient);

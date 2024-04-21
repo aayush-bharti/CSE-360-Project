@@ -25,8 +25,9 @@ public class Patient {
 	private ArrayList<Vitals> vitals;
 	private ArrayList<Message> doctorMessages;
 	private ArrayList<Message> nurseMessages;
+	private ArrayList<Message> receivedDoctorMessages;
+	private ArrayList<Message> receivedNurseMessages;
 	private ArrayList<Summary> summaries;
-	private Doctor defaultDoctor;
 	
 	public Patient(String firstName, String lastName, String DOB, String phoneNumber, String email, String username, String password, String insurance, String pharmacy) {
 		this.firstName = firstName;
@@ -38,7 +39,6 @@ public class Patient {
 		this.password = password;
 		this.insurance = insurance;
 		this.pharmacy = pharmacy;
-		this.defaultDoctor = Database.doctorSearch("default");
 		physicalExams = new ArrayList<Physical>();
 		prescriptions = new ArrayList<Prescription>();
 		questionnaires = new ArrayList<Questionnaire>();
@@ -46,6 +46,8 @@ public class Patient {
 		vitals = new ArrayList<Vitals>();
 		doctorMessages = new ArrayList<Message>();
 		nurseMessages = new ArrayList<Message>();
+		receivedDoctorMessages = new ArrayList<Message>();
+		receivedNurseMessages = new ArrayList<Message>();
 		summaries = new ArrayList<Summary>();
 	}
 		
@@ -105,14 +107,10 @@ public class Patient {
 		return pharmacy;
 	}
 	
-	public Doctor getAssociatedDoctor() {
-		return defaultDoctor;
-	}
-	
 	public ArrayList<Physical> getPhysicalExams(String username) {
 		int numberOfPhysicals = Database.getNumberOfFiles(username, "Physicals");
-		System.out.println("Number of Physicals: " + numberOfPhysicals);
 		int decrementVariable = numberOfPhysicals;
+		
         String patientFolderPath = Database.getSubFolder("Physicals", "patient", username);	
 		for (int i = 0; i < numberOfPhysicals; i++) {
 			String patientInfoFileName = patientFolderPath + File.separator + username + "_" + decrementVariable + "PhysicalInformation.txt";   
@@ -176,7 +174,7 @@ public class Patient {
 		                    break;
 		            }
 		        }
-		        Physical exam = new Physical(examDate, Integer.parseInt(temperature), heartRate, bloodPressure, generalAppearanceResults, 
+		        Physical exam = new Physical(examDate, Float.parseFloat(temperature), heartRate, bloodPressure, generalAppearanceResults, 
 		        							entResults, lungsAndChestResults, vascularResults, generalAppearanceComments, entComments, 
 		        							lungsAndChestComments, vascularComments);
 		        
@@ -198,7 +196,6 @@ public class Patient {
 	
 	public ArrayList<Prescription> getPrescriptions(String username) {
 		int numberOfPrescriptions = Database.getNumberOfFiles(username, "Prescriptions");
-		System.out.println("Number of Prescriptions: " + numberOfPrescriptions);
 		int decrementVariable = numberOfPrescriptions;
 		
         String patientFolderPath = Database.getSubFolder("Prescriptions", "patient", username);	
@@ -257,7 +254,6 @@ public class Patient {
 	
 	public ArrayList<Questionnaire> getQuestionnaires(String username) {
 		int numberOfQuestionnaires = Database.getNumberOfFiles(username, "Questionnaires");
-		System.out.println("Number of Questionnaires: " + numberOfQuestionnaires);
 		int decrementVariable = numberOfQuestionnaires;
 		
         String patientFolderPath = Database.getSubFolder("Questionnaires", "patient", username);	
@@ -308,7 +304,6 @@ public class Patient {
 	
 	public ArrayList<Immunization> getImmunizations(String username) {
 		int numberOfImmunizations = Database.getNumberOfFiles(username, "Immunizations");
-		System.out.println("Number of Immunizations: " + numberOfImmunizations);
 		int decrementVariable = numberOfImmunizations;
 		
         String patientFolderPath = Database.getSubFolder("Immunizations", "patient", username);	
@@ -351,7 +346,6 @@ public class Patient {
 	
 	public ArrayList<Vitals> getVitals(String username) {
 		int numberOfVitals = Database.getNumberOfFiles(username, "Vitals");
-		System.out.println("Number of Vitals: " + numberOfVitals);
 		int decrementVariable = numberOfVitals;
 		
 		String patientFolderPath = Database.getSubFolder("Vitals", "patient", username);		
@@ -409,14 +403,12 @@ public class Patient {
 		String contactFolderPath = "";
 		int numberOfMessages = 0;
 		
-		System.out.println("contactType: " + contactType);
-		
 		if (contactType.equals("patientd")) {
-			contactFolderPath = Database.getContactFolderPath("patientd", username, contact);
-			numberOfMessages = Database.getNumberOfMessages("patientd", username, contact);
+			contactFolderPath = Database.getContactFolderPath("patientd", username, contact, "sent");
+			numberOfMessages = Database.getNumberOfMessages("patientd", username, contact, "sent");
 		} else if (contactType.equals("patientn")) {
-			contactFolderPath = Database.getContactFolderPath("patientn", username, contact);
-			numberOfMessages = Database.getNumberOfMessages("patientn", username, contact);
+			contactFolderPath = Database.getContactFolderPath("patientn", username, contact, "sent");
+			numberOfMessages = Database.getNumberOfMessages("patientn", username, contact, "sent");
 		}
 		
 		int decrementVariable = numberOfMessages;
@@ -465,6 +457,75 @@ public class Patient {
 			}
 		} else if (listType.equals("nurse")) {
 			for (Message message : nurseMessages) {
+				uniqueMessages.add(message);
+			}
+		}
+		ArrayList<Message> uniqueMessagesList = new ArrayList<>(uniqueMessages);
+		return uniqueMessagesList;
+	}
+
+
+	
+	public ArrayList<Message> getReceivedMessages(String listType, String senderType, String patientUsername, String senderUsername) {
+		String contactFolderPath = "";
+		int numberOfMessages = 0;
+		
+		if (senderType.equals("patientd")) {
+			contactFolderPath = Database.getContactFolderPath("patientd", patientUsername, senderUsername, "received");
+			numberOfMessages = Database.getNumberOfMessages("patientd", patientUsername, senderUsername, "received");
+		} else if (senderType.equals("patientn")) {
+			contactFolderPath = Database.getContactFolderPath("patientn", patientUsername, senderUsername, "received");
+			numberOfMessages = Database.getNumberOfMessages("patientn", patientUsername, senderUsername, "received");
+		}
+		
+//		"nurse", "patientn", patient.getUsername(), assignedN.getUsername()
+		
+		int decrementVariable = numberOfMessages;
+		for (int i = 0; i < numberOfMessages; i++) {
+			String contactFileName = contactFolderPath + File.separator + senderUsername + "To" + patientUsername + "_" + decrementVariable + "Message.txt" ; 
+			try (Scanner scanner = new Scanner(new File(contactFileName))) {
+				String timeString = null;
+				String recipient = null;
+				String subj = null;
+				String message = null;
+		        while (scanner.hasNextLine()) {
+		        	String line = scanner.nextLine();
+		            String[] parts = line.split(":");
+		            String key = parts[0].trim();
+		            String value = parts[1].trim();
+		            value = String.join(":", Arrays.copyOfRange(parts, 1, parts.length)).trim(); // Joining any unintentionally split parts
+		            																			 // after the first instance of :
+		            switch (key) {
+		                case "File Creation Stamp":
+		                	timeString = value;
+		                    break;
+		                case "Recipient":
+		                	recipient = value;
+		                    break;
+		                case "Subject":
+		                	subj = value;
+		                    break;
+		                case "Message Body":
+		                	message = value;
+		                    break;
+		            }
+		        }
+		        Message createdMessage = new Message(timeString, recipient, subj, message);
+		        if (!isDuplicateReceivedMessage(listType, createdMessage)) {
+		        	addReceivedMessage(listType, createdMessage);
+		        }
+		        decrementVariable = decrementVariable - 1;
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
+		HashSet<Message> uniqueMessages = new HashSet<>();
+		if (listType.equals("doctor")) {
+			for (Message message : receivedDoctorMessages) {
+				uniqueMessages.add(message);
+			}
+		} else if (listType.equals("nurse")) {
+			for (Message message : receivedNurseMessages) {
 				uniqueMessages.add(message);
 			}
 		}
@@ -605,6 +666,23 @@ public class Patient {
 	    return false;
 	}
 	
+	
+	private boolean isDuplicateReceivedMessage(String listType, Message message) {
+	    if (listType.equals("doctor")) {
+	    	for (Message existingMessage : receivedDoctorMessages) {
+		        if (existingMessage.equals(message)) {
+		            return true;
+		        }
+		    }
+	    } else if (listType.equals("nurse")) {
+	    	for (Message existingMessage : receivedNurseMessages) {
+		        if (existingMessage.equals(message)) {
+		            return true;
+		        }
+		    }
+	    }
+	    return false;
+	}
 	private boolean isDuplicateSummary(Summary summary) {
 	    for (Summary existingSummary : summaries) {
 	        if (existingSummary.equals(summary)) {
@@ -639,6 +717,14 @@ public class Patient {
 			doctorMessages.add(message);
 		} else if (listType.equals("nurse")) {
 			nurseMessages.add(message);
+		}
+	}
+	
+	public void addReceivedMessage(String listType, Message message) {
+		if (listType.equals("doctor")) {
+			receivedDoctorMessages.add(message);
+		} else if (listType.equals("nurse")) {
+			receivedNurseMessages.add(message);
 		}
 	}
 	

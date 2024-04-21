@@ -7,7 +7,7 @@ public class Physical {
 	private String lastName;
 	private String DOB;
 	private String examDate;
-	private int temperature;
+	private float temperature;
 	private String heartRate;
 	private String bloodPressure;
 	private String patientID;
@@ -20,7 +20,7 @@ public class Physical {
 	private String lungComment;
 	private String vascularComment;
 
-	public Physical(String examDate, int temperature, String heartRate, String bloodPressure, String appearanceResult, 
+	public Physical(String examDate, float temperature, String heartRate, String bloodPressure, String appearanceResult, 
 					String entResult, String lungResult, String vascularResult, String appearanceComment, 
 					String entComment, String lungComment, String vascularComment) {
 		
@@ -38,7 +38,7 @@ public class Physical {
 		this.vascularComment = vascularComment; 
 	}
 	
-	public Physical(String examDate, int temperature, String heartRate, String bloodPressure, String appearanceResult, 
+	public Physical(String examDate, float temperature, String heartRate, String bloodPressure, String appearanceResult, 
 			String entResult, String lungResult, String vascularResult) {
 
 		this.examDate = examDate;
@@ -59,7 +59,7 @@ public class Physical {
 		this.lastName = lastName;
 		this.DOB = DOB;
 		this.examDate = examDate;
-		this.temperature = Integer.parseInt(temperature);
+		this.temperature = Float.parseFloat(temperature);
 		this.heartRate = heartRate;
 		this.bloodPressure = bloodPressure;
 		this.patientID = patientID;
@@ -109,7 +109,7 @@ public class Physical {
 		return examDate;
 	}
 	
-	public int getTemperature() {
+	public float getTemperature() {
 		return temperature;
 	}
 	

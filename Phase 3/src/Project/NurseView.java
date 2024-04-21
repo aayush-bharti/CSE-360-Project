@@ -25,13 +25,13 @@ public class NurseView extends Application {
 	private Nurse nurse;
 	private Patient patient;
 	
-	static LocalDateTime time;
-	static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss");
+	private static LocalDateTime time;
+	private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss");
 	
-	boolean createdVitals = false;
-	boolean createdQuestionnaire = false;
-	Vitals vitalsObj = null;
-	Questionnaire questionnaireObj = null;
+	private boolean createdVitals = false;
+	private boolean createdQuestionnaire = false;
+	private Vitals vitalsObj = null;
+	private Questionnaire questionnaireObj = null;
 	
 	public NurseView(Nurse nurse) {
 		this.nurse = nurse;
@@ -276,12 +276,21 @@ public class NurseView extends Application {
 				save.setOnAction(new EventHandler<>() {
 		        	public void handle(ActionEvent event) {
 		        		if (!createdVitals) {
-		        			Database.createVitalsFile(patient.getUsername(), dateField.getText(), weightField.getText(), 
-									heightField.getText(), tempField.getText(), bpField.getText());
-		
-							vitalsObj = new Vitals(dateField.getText(), weightField.getText(), heightField.getText(), 
-													tempField.getText(), bpField.getText());
-							createdVitals = true;
+		        			if (Database.validateInput("Date", dateField.getText()) && 
+		        					Database.validateInput("Weight", weightField.getText()) && 
+		        					Database.validateInput("Height", heightField.getText()) && 
+		        					Database.validateInput("Temperature", tempField.getText()) && 
+		        					Database.validateInput("Blood Pressure", bpField.getText())) {
+		        				
+		        				Database.createVitalsFile(patient.getUsername(), dateField.getText(), weightField.getText(), 
+										heightField.getText(), tempField.getText(), bpField.getText());
+			
+								vitalsObj = new Vitals(dateField.getText(), weightField.getText(), heightField.getText(), 
+														tempField.getText(), bpField.getText());
+								createdVitals = true;
+		        			} else {
+		        				Database.showAlert("Invalid Syntax");
+		        			}
 		        		} else {
 		        			Database.showAlert("One Per Session");
 		        		}
@@ -334,20 +343,6 @@ public class NurseView extends Application {
 				
 				ArrayList<Vitals> vitals = patient.getVitals(patient.getUsername());
 				if (vitals != null) {
-					for (Vitals vital : vitals) {
-						String vitalsDate = vital.getDate();
-						String weight = vital.getWeight();
-						String height = vital.getHeight();
-						String temperature = vital.getTemperature();
-						String bloodPressure = vital.getBloodPressure();
-
-						System.out.println(vitalsDate);
-						System.out.println(weight);
-						System.out.println(height);
-						System.out.println(temperature);
-						System.out.println(bloodPressure);
-						System.out.println("===============");
-					}
 					for (Vitals vital : vitals) {
 						String vitalsDate = vital.getDate();
 						String weight = vital.getWeight();
@@ -418,26 +413,7 @@ public class NurseView extends Application {
 				if (physicalExams != null) {
 					for (Physical exam : physicalExams) {
 						String examDate = exam.getExamDate();
-						String temperature = Integer.toString(exam.getTemperature());
-						String heartRate = exam.getHeartRate();
-						String bloodPressure = exam.getBloodPressure();
-						String appearanceResult = exam.getAppearanceResult();
-						String entResult = exam.getEntResult();
-						String lungResult = exam.getLungResult();
-						String vascularResult = exam.getVascularResult();
-						System.out.println(examDate);
-						System.out.println(temperature);
-						System.out.println(heartRate);
-						System.out.println(bloodPressure);
-						System.out.println(appearanceResult);
-						System.out.println(entResult);
-						System.out.println(lungResult);
-						System.out.println(vascularResult);
-						System.out.println("===============");
-					}
-					for (Physical exam : physicalExams) {
-						String examDate = exam.getExamDate();
-						int temperature = exam.getTemperature();
+						float temperature = exam.getTemperature();
 						String heartRate = exam.getHeartRate();
 						String bloodPressure = exam.getBloodPressure();
 						String appearanceResult = exam.getAppearanceResult();
@@ -472,18 +448,6 @@ public class NurseView extends Application {
 				questionnaireTable.refresh();
 				ArrayList<Questionnaire> questionnaires = patient.getQuestionnaires(patient.getUsername());
 				if (questionnaires != null) {
-					for (Questionnaire questionnaire : questionnaires) {
-						String questionnaireTime = questionnaire.getDateTime();
-						String physicalQuestion = questionnaire.getPhysicalQuestion();
-						String mentalQuestion = questionnaire.getMentalQuestion();
-						String immunizationQuestion = questionnaire.getImmunizationQuestion();
-						System.out.println(questionnaireTime);
-						System.out.println(physicalQuestion);
-						System.out.println(mentalQuestion);
-						System.out.println(immunizationQuestion);
-						System.out.println("=======================");
-					}
-
 					for (Questionnaire questionnaire : questionnaires) {
 						String questionnaireTime = questionnaire.getDateTime();
 						String physicalQuestion = questionnaire.getPhysicalQuestion();
@@ -530,21 +494,6 @@ public class NurseView extends Application {
 						String email = prescription.getEmail();
 						String insuranceProvider = prescription.getInsuranceProvider();
 						String preferredPharmacy = prescription.getPreferredPharmacy();
-						System.out.println(prescriptionTime);
-						System.out.println(prescriptionBody);
-						System.out.println(phoneNumber);
-						System.out.println(email);
-						System.out.println(insuranceProvider);
-						System.out.println(preferredPharmacy);
-						System.out.println("===============");
-					}
-					for (Prescription prescription : prescriptions) {
-						String prescriptionTime = prescription.getDateTime();
-						String prescriptionBody = prescription.getPrescriptionBody();
-						String phoneNumber = prescription.getPhoneNumber();
-						String email = prescription.getEmail();
-						String insuranceProvider = prescription.getInsuranceProvider();
-						String preferredPharmacy = prescription.getPreferredPharmacy();
 						prescriptionTable.getItems().add(new Prescription(prescriptionTime, prescriptionBody, phoneNumber, email, insuranceProvider, preferredPharmacy));
 					}
 				}
@@ -567,13 +516,6 @@ public class NurseView extends Application {
 				immunizationTable.refresh();
 				ArrayList<Immunization> immunizations = patient.getImmunizations(patient.getUsername());
 				if (immunizations != null) {
-					for (Immunization immunization : immunizations) {
-						String immunizationTime = immunization.getDateTime();
-						String immunizationQuestion = immunization.getImmunizationQuestion();
-						System.out.println(immunizationTime);
-						System.out.println(immunizationQuestion);
-						System.out.println("==================");
-					}
 					for (Immunization immunization : immunizations) {
 						String immunizationTime = immunization.getDateTime();
 						String immunizationQuestion = immunization.getImmunizationQuestion();
@@ -708,24 +650,44 @@ public class NurseView extends Application {
 						String messageTime = localMessage.getDateTime();
 						String messageRecipient = localMessage.getRecipient();
 						String messageSubject = localMessage.getSubject();
-						String messageBody = localMessage.getMessageBody();				
-						System.out.println(messageTime);
-						System.out.println(messageRecipient);
-						System.out.println(messageSubject);
-						System.out.println(messageBody);
-						System.out.println("===============");
-					}
-					for (Message localMessage : messages) {
-						String messageTime = localMessage.getDateTime();
-						String messageRecipient = localMessage.getRecipient();
-						String messageSubject = localMessage.getSubject();
 						String messageBody = localMessage.getMessageBody();						
 						messageTable.getItems().add(new Message(messageTime, messageRecipient, messageSubject, messageBody));
 					}
 				}
+				
+				TableView<Message> receivedMessageTable = new TableView<Message>();
+				TableColumn<Message, String> receivedDateColumn = new TableColumn<Message, String>("Date");
+				TableColumn<Message, String> receivedSubjectColumn = new TableColumn<Message, String>("Subject");
+				TableColumn<Message, String> receivedMessageColumn = new TableColumn<Message, String>("Message Body");
 
+				receivedDateColumn.setCellValueFactory(new PropertyValueFactory<Message, String>("dateTime"));
+				receivedSubjectColumn.setCellValueFactory(new PropertyValueFactory<Message, String>("subject"));
+				receivedMessageColumn.setCellValueFactory(new PropertyValueFactory<Message, String>("messageBody"));
+
+				// adds every column to the table and sets their widths
+				receivedMessageTable.getColumns().addAll(receivedDateColumn, receivedSubjectColumn, receivedMessageColumn);
+				
+				receivedMessageTable.setMaxWidth(800);
+				receivedDateColumn.setPrefWidth(70);
+				receivedSubjectColumn.setPrefWidth(100);
+				receivedMessageColumn.setPrefWidth(400);
+				receivedMessageTable.setTranslateY(70);
+				
+				receivedMessageTable.getItems().clear();
+				receivedMessageTable.refresh();
+				ArrayList<Message> receivedMessages = nurse.getReceivedMessages(nurse.getUsername(), patient.getUsername());
+				if (receivedMessages != null) {
+					for (Message localMessage : receivedMessages) {
+						String messageTime = localMessage.getDateTime();
+						String messageRecipient = localMessage.getRecipient();
+						String messageSubject = localMessage.getSubject();
+						String messageBody = localMessage.getMessageBody();						
+						receivedMessageTable.getItems().add(new Message(messageTime, messageRecipient, messageSubject, messageBody));
+					}
+				}
+				
 				// adds everything to the right vbox
-				right.getChildren().addAll(recipientBox, subjectBox, message, buttons, messageTable);	
+				right.getChildren().addAll(recipientBox, subjectBox, message, buttons, messageTable, receivedMessageTable);	
 				right.setSpacing(10);
 				
 				// copies the right vbox into a temporary vbox to change its position 

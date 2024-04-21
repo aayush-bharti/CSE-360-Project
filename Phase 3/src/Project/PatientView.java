@@ -24,8 +24,8 @@ public class PatientView extends Application {
 	private String assignedDoctor;
 	private String assignedNurse;
 	
-	static LocalDateTime time;
-	static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss");
+	private static LocalDateTime time;
+	private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss");
 	
 	public PatientView(Patient patient) {
 		this.patient = patient;
@@ -36,8 +36,6 @@ public class PatientView extends Application {
 	public void start(Stage primaryStage) {
 		final Doctor assignedD;
 		final Nurse assignedN;
-		System.out.println("Assigned Doctor: " + assignedDoctor);
-		System.out.println("Assigned Nurse: " + assignedNurse);
 		
 		if (!assignedDoctor.equals("ABC")) {
 			assignedD = Database.doctorSearch(assignedDoctor);
@@ -79,7 +77,7 @@ public class PatientView extends Application {
 		messagesOpen.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 		
 		// back button to take back to the home login page
-		Button back = new Button("BACK");
+		Button back = new Button("LOGOUT");
 		back.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 		back.setPrefWidth(175);
 		back.setTranslateY(70);
@@ -414,6 +412,7 @@ public class PatientView extends Application {
 							if (sendToWho[0].equals("Doctor") && !assignedDoctor.equals("ABC")) {
 								String result = Database.createMessageFile("Can't create", "patientd", patient.getUsername(), assignedD.getUsername(), 
 										timeString, subjField.getText(), message.getText());
+								System.out.println("result: " + result);
 								if (!result.equals("Don't create") || !result.equals("Created")) {
 									Database.createMessageFile(result, "patientd", patient.getUsername(), assignedD.getUsername(), 
 											timeString, subjField.getText(), message.getText());
@@ -421,6 +420,7 @@ public class PatientView extends Application {
 							} else if (sendToWho[0].equals("Nurse") && !assignedNurse.equals("ABC")) {
 								String result = Database.createMessageFile("Can't create", "patientn", patient.getUsername(), assignedN.getUsername(), 
 										timeString, subjField.getText(), message.getText());
+								System.out.println("result: " + result);
 								if (!result.equals("Don't create") || !result.equals("Created")) {
 									Database.createMessageFile(result, "patientn", patient.getUsername(), assignedN.getUsername(), 
 											timeString, subjField.getText(), message.getText());
@@ -468,19 +468,7 @@ public class PatientView extends Application {
 				if (assignedD != null) {
 					messages = patient.getMessages("doctor", "patientd", patient.getUsername(), assignedD.getUsername());
 				}
-				System.out.println("Messages.size(): " + messages.size());
 				if (messages != null) {
-					for (Message localMessage : messages) {
-						String messageTime = localMessage.getDateTime();
-						String messageRecipient = localMessage.getRecipient();
-						String messageSubject = localMessage.getSubject();
-						String messageBody = localMessage.getMessageBody();				
-						System.out.println(messageTime);
-						System.out.println(messageRecipient);
-						System.out.println(messageSubject);
-						System.out.println(messageBody);
-						System.out.println("===============");
-					}
 					for (Message localMessage : messages) {
 						String messageTime = localMessage.getDateTime();
 						String messageRecipient = localMessage.getRecipient();
@@ -490,6 +478,41 @@ public class PatientView extends Application {
 					}
 				}
 				
+				TableView<Message> receivedMessageTable = new TableView<Message>();
+				TableColumn<Message, String> receivedDateColumn = new TableColumn<Message, String>("Date");
+				TableColumn<Message, String> receivedSubjectColumn = new TableColumn<Message, String>("Subject");
+				TableColumn<Message, String> receivedMessageColumn = new TableColumn<Message, String>("Message Body");
+
+				receivedDateColumn.setCellValueFactory(new PropertyValueFactory<Message, String>("dateTime"));
+				receivedSubjectColumn.setCellValueFactory(new PropertyValueFactory<Message, String>("subject"));
+				receivedMessageColumn.setCellValueFactory(new PropertyValueFactory<Message, String>("messageBody"));
+
+				// adds every column to the table and sets their widths
+				receivedMessageTable.getColumns().addAll(receivedDateColumn, receivedSubjectColumn, receivedMessageColumn);
+				
+				receivedMessageTable.setMaxWidth(800);
+				receivedDateColumn.setPrefWidth(70);
+				receivedSubjectColumn.setPrefWidth(100);
+				receivedMessageColumn.setPrefWidth(400);
+				receivedMessageTable.setTranslateY(70);
+				
+				receivedMessageTable.getItems().clear();
+				receivedMessageTable.refresh();
+				
+				ArrayList<Message> receivedMessages = new ArrayList<Message>();
+				if (assignedD != null) {
+					receivedMessages = patient.getReceivedMessages("doctor", "patientd", patient.getUsername(), assignedD.getUsername());
+				}
+				if (receivedMessages != null) {
+					for (Message localMessage : receivedMessages) {
+						String messageTime = localMessage.getDateTime();
+						String messageRecipient = localMessage.getRecipient();
+						String messageSubject = localMessage.getSubject();
+						String messageBody = localMessage.getMessageBody();						
+						receivedMessageTable.getItems().add(new Message(messageTime, messageRecipient, messageSubject, messageBody));
+					}
+				}
+
 				TableView<Message> messageTable1 = new TableView<Message>();
 				TableColumn<Message, String> dateColumn1 = new TableColumn<Message, String>("Date");
 				TableColumn<Message, String> subjectColumn1 = new TableColumn<Message, String>("Subject");
@@ -514,21 +537,8 @@ public class PatientView extends Application {
 				ArrayList<Message> messages1 = new ArrayList<Message>();
 				if (assignedN != null) {
 					messages1 = patient.getMessages("nurse", "patientn", patient.getUsername(), assignedN.getUsername());
-				}
-				System.out.println("Messages1.size(): " + messages1.size());
-				
+				}				
 				if (messages1 != null) {
-					for (Message localMessage : messages1) {
-						String messageTime = localMessage.getDateTime();
-						String messageRecipient = localMessage.getRecipient();
-						String messageSubject = localMessage.getSubject();
-						String messageBody = localMessage.getMessageBody();				
-						System.out.println(messageTime);
-						System.out.println(messageRecipient);
-						System.out.println(messageSubject);
-						System.out.println(messageBody);
-						System.out.println("===============");
-					}
 					for (Message localMessage : messages1) {
 						String messageTime = localMessage.getDateTime();
 						String messageRecipient = localMessage.getRecipient();
@@ -538,7 +548,43 @@ public class PatientView extends Application {
 					}
 				}
 				
-				rightSide.getChildren().addAll(recipientBox, subjectBox, message, radioButtons, buttons, messageTable, messageTable1);	
+				TableView<Message> receivedMessageTable1 = new TableView<Message>();
+				TableColumn<Message, String> receivedDateColumn1 = new TableColumn<Message, String>("Date");
+				TableColumn<Message, String> receivedSubjectColumn1 = new TableColumn<Message, String>("Subject");
+				TableColumn<Message, String> receivedMessageColumn1 = new TableColumn<Message, String>("Message Body");
+
+				receivedDateColumn1.setCellValueFactory(new PropertyValueFactory<Message, String>("dateTime"));
+				receivedSubjectColumn1.setCellValueFactory(new PropertyValueFactory<Message, String>("subject"));
+				receivedMessageColumn1.setCellValueFactory(new PropertyValueFactory<Message, String>("messageBody"));
+
+				// adds every column to the table and sets their widths
+				receivedMessageTable1.getColumns().addAll(receivedDateColumn1, receivedSubjectColumn1, receivedMessageColumn1);
+				
+				receivedMessageTable1.setMaxWidth(800);
+				receivedDateColumn1.setPrefWidth(70);
+				receivedSubjectColumn1.setPrefWidth(100);
+				receivedMessageColumn1.setPrefWidth(400);
+				receivedMessageTable1.setTranslateY(70);
+				
+				receivedMessageTable1.getItems().clear();
+				receivedMessageTable1.refresh();
+				
+				ArrayList<Message> receivedMessages1 = new ArrayList<Message>();
+				if (assignedN != null) {
+					receivedMessages1 = patient.getReceivedMessages("nurse", "patientn", patient.getUsername(), assignedN.getUsername());
+				}				
+				if (receivedMessages1 != null) {
+					for (Message localMessage : receivedMessages1) {
+						String messageTime = localMessage.getDateTime();
+						String messageRecipient = localMessage.getRecipient();
+						String messageSubject = localMessage.getSubject();
+						String messageBody = localMessage.getMessageBody();						
+						receivedMessageTable1.getItems().add(new Message(messageTime, messageRecipient, messageSubject, messageBody));
+					}
+				}
+		
+				rightSide.getChildren().addAll(recipientBox, subjectBox, message, radioButtons, buttons, messageTable, 
+												messageTable1, receivedMessageTable, receivedMessageTable1);	
 				rightSide.setSpacing(10);
 				
 				// making new temp vbox to add everything to right
